@@ -1,13 +1,88 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Currency {
+  UAH
+  USD
+  USDT
+}
+
+enum AccountKind {
+  CARD
+  CASH
+  PLATFORM
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+  EXCHANGE
+}
+
+enum LegDirection {
+  IN
+  OUT
+}
+
+model Account {
+  id         String           @id @default(cuid())
+  name       String           @unique
+  kind       AccountKind
+  currency   Currency
+  isArchived Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  legs       TransactionLeg[]
+
+  @@index([isArchived])
+}
+
+model Category {
+  id         String        @id @default(cuid())
+  name       String        @unique
+  isDeleted  Boolean       @default(false)
+  deletedAt  DateTime?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([isDeleted])
+}
+
+model Transaction {
+  id                   String           @id @default(cuid())
+  type                 TransactionType
+  occurredAt           DateTime
+  note                 String?
+  categoryId           String?
+  categorySnapshotName String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  category             Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  legs                 TransactionLeg[]
+
+  @@index([occurredAt])
+  @@index([type])
+  @@index([categoryId])
+}
+
+model TransactionLeg {
+  id            String       @id @default(cuid())
+  transactionId String
+  accountId     String
+  direction     LegDirection
+  amountDecimal Decimal      @db.Decimal(18, 4)
+  currency      Currency
+  createdAt     DateTime     @default(now())
+  transaction   Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account       Account      @relation(fields: [accountId], references: [id], onDelete: Restrict)
+
+  @@index([transactionId])
+  @@index([accountId])
 }

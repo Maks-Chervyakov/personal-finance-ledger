@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Expense Tracker v1
 
-## Getting Started
+Локальное single-user приложение на `Next.js + Prisma + PostgreSQL` для учета:
 
-First, run the development server:
+- расходов по категориям
+- доходов
+- переводов между своими счетами
+- обменов между валютами и платформами
+
+## Что умеет
+
+- отдельные формы для `расхода`, `дохода`, `перевода`, `обмена`
+- несколько счетов и валют (`UAH`, `USD`, `USDT`)
+- редактирование и удаление операций
+- управление категориями с сохранением истории удаленных категорий
+- управление счетами с архивированием
+- круговые диаграммы расходов отдельно по каждой валюте
+- фильтрация по месяцу, счетам, категориям и типу операции
+
+## Локальный запуск
+
+1. Подними PostgreSQL:
+
+```bash
+docker compose up -d
+```
+
+2. Скопируй переменные окружения:
+
+```bash
+cp .env.example .env
+```
+
+3. Примени схему и сгенерируй клиент:
+
+```bash
+npm install
+npm run db:push
+npm run db:seed
+```
+
+4. Запусти dev-сервер:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откроется [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Основная модель
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `Expense`: списание с одного счета + категория
+- `Income`: поступление на один счет
+- `Transfer`: движение между своими счетами одной валюты
+- `Exchange`: обмен между разными валютами, не считается расходом
 
-## Learn More
+Пример `Binance USDT -> UAH card` через P2P — это `exchange`, а не `expense`.
 
-To learn more about Next.js, take a look at the following resources:
+## История категорий
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+У каждой расходной операции сохраняется `categorySnapshotName`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Это значит:
 
-## Deploy on Vercel
+- переименование категории не переписывает старые операции
+- soft delete категории не ломает историю
+- в старых расходах видно старое имя и факт удаления категории
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Деплой на VPS
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Проект настроен с `output: "standalone"`, поэтому его удобно деплоить на сервер как Node-приложение.
+
+`Apache` стоит использовать как reverse proxy перед `next start`, а не как хостинг для одной статики.
