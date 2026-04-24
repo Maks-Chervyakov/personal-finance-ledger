@@ -28,11 +28,15 @@ export function NavLink({
       ? pathname === href || pathname.startsWith(`${href}/`)
       : pathname === href;
 
-  const baseClassName = className ?? "rounded-full px-4 py-2 text-sm font-medium transition";
+  const baseClassName =
+    className ??
+    "rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/55 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
   const activeStateClassName =
-    activeClassName ?? "bg-blue-500 text-white shadow-lg shadow-blue-500/30";
+    activeClassName ??
+    "border border-cyan-200/40 bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30";
   const inactiveStateClassName =
-    inactiveClassName ?? "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white";
+    inactiveClassName ??
+    "border border-white/12 bg-white/6 text-slate-200 hover:border-white/22 hover:bg-white/10 hover:text-white";
 
   return (
     <Link
