@@ -10,7 +10,7 @@ const accounts = [
   { name: "Bybit USDT", kind: AccountKind.PLATFORM, currency: Currency.USDT },
 ];
 
-const categories = ["???", "?????????", "???????????"];
+const categories = ["Еда", "Транспорт", "Подписки"];
 
 async function main() {
   for (const account of accounts) {

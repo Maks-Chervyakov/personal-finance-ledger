@@ -7,16 +7,16 @@ export const CURRENCY_LABELS: Record<Currency, string> = {
 };
 
 export const ACCOUNT_KIND_LABELS: Record<AccountKind, string> = {
-  [AccountKind.CARD]: "?????",
-  [AccountKind.CASH]: "????????",
-  [AccountKind.PLATFORM]: "?????????",
+  [AccountKind.CARD]: "Карта",
+  [AccountKind.CASH]: "Наличные",
+  [AccountKind.PLATFORM]: "Платформа",
 };
 
 export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
-  [TransactionType.EXPENSE]: "??????",
-  [TransactionType.INCOME]: "?????",
-  [TransactionType.TRANSFER]: "???????",
-  [TransactionType.EXCHANGE]: "?????",
+  [TransactionType.EXPENSE]: "Расход",
+  [TransactionType.INCOME]: "Доход",
+  [TransactionType.TRANSFER]: "Перевод",
+  [TransactionType.EXCHANGE]: "Обмен",
 };
 
 export const PIE_COLORS = [

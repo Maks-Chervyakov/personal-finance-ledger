@@ -11,6 +11,10 @@ type CommonFormProps = {
   pendingLabel: string;
   title?: string;
   compact?: boolean;
+  hiddenFields?: Array<{
+    name: string;
+    value: string;
+  }>;
 };
 
 type ExpenseInitialValues = {
@@ -114,7 +118,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputClassName =
   "w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-400";
 
-export function ExpenseForm({ accounts, categories, action, submitLabel, pendingLabel, title, compact, initial }: ExpenseFormProps) {
+export function ExpenseForm({ accounts, categories, action, submitLabel, pendingLabel, title, compact, initial, hiddenFields }: ExpenseFormProps) {
   const accountOptions = getAccountOptions(accounts, initial?.accountId ? [initial.accountId] : []);
   const categoryOptions = getCategoryOptions(categories, initial?.categoryId);
   const disabled = accountOptions.length === 0 || categoryOptions.length === 0;
@@ -123,6 +127,9 @@ export function ExpenseForm({ accounts, categories, action, submitLabel, pending
     <FormCard title={title} compact={compact}>
       <form action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
+        {hiddenFields?.map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
+        ))}
         <FormGrid compact={compact}>
           <Field label="Дата">
             <input type="date" name="occurredOn" defaultValue={initial?.occurredOn ?? getTodayDate()} className={inputClassName} required />
@@ -168,7 +175,7 @@ export function ExpenseForm({ accounts, categories, action, submitLabel, pending
   );
 }
 
-export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title, compact, defaultAccountId, initial }: IncomeFormProps) {
+export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title, compact, defaultAccountId, initial, hiddenFields }: IncomeFormProps) {
   const accountOptions = getAccountOptions(accounts, initial?.accountId ? [initial.accountId] : []);
   const defaultSelectedAccountId = initial?.accountId ?? defaultAccountId ?? accountOptions[0]?.id ?? "";
 
@@ -176,6 +183,9 @@ export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title,
     <FormCard title={title} compact={compact}>
       <form action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
+        {hiddenFields?.map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
+        ))}
         <FormGrid compact={compact}>
           <Field label="Дата">
             <input type="date" name="occurredOn" defaultValue={initial?.occurredOn ?? getTodayDate()} className={inputClassName} required />
@@ -209,13 +219,16 @@ export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title,
   );
 }
 
-export function TransferForm({ accounts, action, submitLabel, pendingLabel, title, compact, initial }: TransferFormProps) {
+export function TransferForm({ accounts, action, submitLabel, pendingLabel, title, compact, initial, hiddenFields }: TransferFormProps) {
   const accountOptions = getAccountOptions(accounts, [initial?.fromAccountId ?? "", initial?.toAccountId ?? ""].filter(Boolean));
 
   return (
     <FormCard title={title} compact={compact}>
       <form action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
+        {hiddenFields?.map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
+        ))}
         <FormGrid compact={compact}>
           <Field label="Дата">
             <input type="date" name="occurredOn" defaultValue={initial?.occurredOn ?? getTodayDate()} className={inputClassName} required />
@@ -261,13 +274,16 @@ export function TransferForm({ accounts, action, submitLabel, pendingLabel, titl
   );
 }
 
-export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, title, compact, initial }: ExchangeFormProps) {
+export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, title, compact, initial, hiddenFields }: ExchangeFormProps) {
   const accountOptions = getAccountOptions(accounts, [initial?.fromAccountId ?? "", initial?.toAccountId ?? ""].filter(Boolean));
 
   return (
     <FormCard title={title} compact={compact}>
       <form action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
+        {hiddenFields?.map((field) => (
+          <input key={field.name} type="hidden" name={field.name} value={field.value} />
+        ))}
         <FormGrid compact={compact}>
           <Field label="Дата">
             <input type="date" name="occurredOn" defaultValue={initial?.occurredOn ?? getTodayDate()} className={inputClassName} required />

@@ -93,3 +93,28 @@ export function parseMultiValue(value: string | string[] | undefined): string[] 
 
   return Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
 }
+
+export function formatCount(
+  count: number,
+  one: string,
+  few: string,
+  many: string,
+): string {
+  const absolute = Math.abs(count);
+  const lastTwoDigits = absolute % 100;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return `${count} ${many}`;
+  }
+
+  const lastDigit = absolute % 10;
+  if (lastDigit === 1) {
+    return `${count} ${one}`;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return `${count} ${few}`;
+  }
+
+  return `${count} ${many}`;
+}

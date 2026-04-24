@@ -11,7 +11,7 @@ type SubmitButtonProps = {
 
 export function SubmitButton({
   label,
-  pendingLabel = "????????...",
+  pendingLabel = "Сохраняю...",
   className,
   disabled = false,
 }: SubmitButtonProps) {

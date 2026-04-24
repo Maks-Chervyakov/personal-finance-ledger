@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function AccountsPage() {
+export default function ManagePage() {
   redirect("/manage/accounts");
 }

@@ -1,10 +1,11 @@
 "use server";
 
 import { refresh, revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { AccountKind, LegDirection, Prisma, TransactionType, type Currency } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
-import { parseOccurredOn } from "@/lib/utils";
+import { parseOccurredOn, toOptionalText } from "@/lib/utils";
 import {
   accountMutationSchema,
   categoryMutationSchema,
@@ -19,7 +20,13 @@ import {
   updateCategorySchema,
 } from "@/lib/validation";
 
-const APP_PATHS = ["/", "/accounts", "/categories"];
+const APP_PATHS = [
+  "/",
+  "/operations",
+  "/operations/new",
+  "/manage/accounts",
+  "/manage/categories",
+];
 
 function revalidateApp() {
   for (const path of APP_PATHS) {
@@ -34,7 +41,7 @@ function normalizeError(error: unknown): Error {
     return error;
   }
 
-  return new Error("??????????? ??????");
+  return new Error("Непредвиденная ошибка");
 }
 
 function ensure(condition: unknown, message: string): asserts condition {
@@ -57,6 +64,8 @@ function createLeg(accountId: string, direction: LegDirection, amountDecimal: st
 }
 
 export async function createExpense(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = expenseTransactionSchema.parse(toDataObject(formData));
     const [account, category] = await prisma.$transaction([
@@ -64,10 +73,10 @@ export async function createExpense(formData: FormData) {
       prisma.category.findUnique({ where: { id: data.categoryId } }),
     ]);
 
-    ensure(account, "???? ?? ??????");
-    ensure(!account.isArchived, "?????? ????????? ????? ???????? ? ???????? ?????");
-    ensure(category, "????????? ?? ???????");
-    ensure(!category.isDeleted, "?????? ????????? ????????? ????????? ????? ????????");
+    ensure(account, "Счет не найден");
+    ensure(!account.isArchived, "Нельзя создавать запись в архивном счете");
+    ensure(category, "Категория не найдена");
+    ensure(!category.isDeleted, "Нельзя создавать расход в удаленной категории");
 
     await prisma.transaction.create({
       data: {
@@ -86,12 +95,18 @@ export async function createExpense(formData: FormData) {
   } catch (error) {
     throw normalizeError(error);
   }
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
 }
 
 export async function updateExpense(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = expenseTransactionSchema.parse(toDataObject(formData));
-    ensure(data.transactionId, "??? id ??????????");
+    ensure(data.transactionId, "Нет id транзакции");
 
     const existing = await prisma.transaction.findUnique({
       where: { id: data.transactionId },
@@ -104,12 +119,12 @@ export async function updateExpense(formData: FormData) {
       prisma.category.findUnique({ where: { id: data.categoryId } }),
     ]);
 
-    ensure(existing, "?????????? ?? ???????");
-    ensure(account, "???? ?? ??????");
-    ensure(category, "????????? ?? ???????");
+    ensure(existing, "Транзакция не найдена");
+    ensure(account, "Счет не найден");
+    ensure(category, "Категория не найдена");
 
     if (category.isDeleted) {
-      ensure(existing.categoryId === category.id, "?????? ????????? ????????? ????????? ?????? ????????");
+      ensure(existing.categoryId === category.id, "Нельзя менять удаленную категорию на другую");
     }
 
     await prisma.transaction.update({
@@ -131,15 +146,21 @@ export async function updateExpense(formData: FormData) {
   } catch (error) {
     throw normalizeError(error);
   }
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
 }
 
 export async function createIncome(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = incomeTransactionSchema.parse(toDataObject(formData));
     const account = await prisma.account.findUnique({ where: { id: data.accountId } });
 
-    ensure(account, "???? ?? ??????");
-    ensure(!account.isArchived, "?????? ????????? ????? ???????? ? ???????? ?????");
+    ensure(account, "Счет не найден");
+    ensure(!account.isArchived, "Нельзя создавать запись в архивном счете");
 
     await prisma.transaction.create({
       data: {
@@ -155,16 +176,22 @@ export async function createIncome(formData: FormData) {
     revalidateApp();
   } catch (error) {
     throw normalizeError(error);
+  }
+
+  if (redirectTo) {
+    redirect(redirectTo);
   }
 }
 
 export async function updateIncome(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = incomeTransactionSchema.parse(toDataObject(formData));
-    ensure(data.transactionId, "??? id ??????????");
+    ensure(data.transactionId, "Нет id транзакции");
 
     const account = await prisma.account.findUnique({ where: { id: data.accountId } });
-    ensure(account, "???? ?? ??????");
+    ensure(account, "Счет не найден");
 
     await prisma.transaction.update({
       where: { id: data.transactionId },
@@ -185,9 +212,15 @@ export async function updateIncome(formData: FormData) {
   } catch (error) {
     throw normalizeError(error);
   }
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
 }
 
 export async function createTransfer(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = transferTransactionSchema.parse(toDataObject(formData));
     const [fromAccount, toAccount] = await prisma.$transaction([
@@ -195,11 +228,11 @@ export async function createTransfer(formData: FormData) {
       prisma.account.findUnique({ where: { id: data.toAccountId } }),
     ]);
 
-    ensure(fromAccount, "???? ???????? ?? ??????");
-    ensure(toAccount, "???? ?????????? ?? ??????");
-    ensure(!fromAccount.isArchived && !toAccount.isArchived, "?????? ????????? ????? ??????? ? ????????? ???????");
-    ensure(fromAccount.id !== toAccount.id, "????? ???????? ?????? ??????????");
-    ensure(fromAccount.currency === toAccount.currency, "??????? ???????????? ?????? ???? ??????");
+    ensure(fromAccount, "Счет списания не найден");
+    ensure(toAccount, "Счет зачисления не найден");
+    ensure(!fromAccount.isArchived && !toAccount.isArchived, "Нельзя создавать перевод из или в архивный счет");
+    ensure(fromAccount.id !== toAccount.id, "Нельзя переводить на тот же счет");
+    ensure(fromAccount.currency === toAccount.currency, "Перевод возможен только между счетами одной валюты");
 
     await prisma.transaction.create({
       data: {
@@ -218,23 +251,29 @@ export async function createTransfer(formData: FormData) {
     revalidateApp();
   } catch (error) {
     throw normalizeError(error);
+  }
+
+  if (redirectTo) {
+    redirect(redirectTo);
   }
 }
 
 export async function updateTransfer(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = transferTransactionSchema.parse(toDataObject(formData));
-    ensure(data.transactionId, "??? id ??????????");
+    ensure(data.transactionId, "Нет id транзакции");
 
     const [fromAccount, toAccount] = await prisma.$transaction([
       prisma.account.findUnique({ where: { id: data.fromAccountId } }),
       prisma.account.findUnique({ where: { id: data.toAccountId } }),
     ]);
 
-    ensure(fromAccount, "???? ???????? ?? ??????");
-    ensure(toAccount, "???? ?????????? ?? ??????");
-    ensure(fromAccount.id !== toAccount.id, "????? ???????? ?????? ??????????");
-    ensure(fromAccount.currency === toAccount.currency, "??????? ???????????? ?????? ???? ??????");
+    ensure(fromAccount, "Счет списания не найден");
+    ensure(toAccount, "Счет зачисления не найден");
+    ensure(fromAccount.id !== toAccount.id, "Нельзя переводить на тот же счет");
+    ensure(fromAccount.currency === toAccount.currency, "Перевод возможен только между счетами одной валюты");
 
     await prisma.transaction.update({
       where: { id: data.transactionId },
@@ -258,9 +297,15 @@ export async function updateTransfer(formData: FormData) {
   } catch (error) {
     throw normalizeError(error);
   }
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
 }
 
 export async function createExchange(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = exchangeTransactionSchema.parse(toDataObject(formData));
     const [fromAccount, toAccount] = await prisma.$transaction([
@@ -268,11 +313,11 @@ export async function createExchange(formData: FormData) {
       prisma.account.findUnique({ where: { id: data.toAccountId } }),
     ]);
 
-    ensure(fromAccount, "???? ???????? ?? ??????");
-    ensure(toAccount, "???? ?????????? ?? ??????");
-    ensure(!fromAccount.isArchived && !toAccount.isArchived, "?????? ????????? ????? ????? ? ????????? ???????");
-    ensure(fromAccount.id !== toAccount.id, "????? ?????? ?????? ??????????");
-    ensure(fromAccount.currency !== toAccount.currency, "????? ?????? ???? ????? ??????? ????????");
+    ensure(fromAccount, "Счет списания не найден");
+    ensure(toAccount, "Счет зачисления не найден");
+    ensure(!fromAccount.isArchived && !toAccount.isArchived, "Нельзя создавать обмен из или в архивный счет");
+    ensure(fromAccount.id !== toAccount.id, "Нельзя использовать один и тот же счет");
+    ensure(fromAccount.currency !== toAccount.currency, "Для обмена нужны счета в разных валютах");
 
     await prisma.transaction.create({
       data: {
@@ -292,22 +337,28 @@ export async function createExchange(formData: FormData) {
   } catch (error) {
     throw normalizeError(error);
   }
+
+  if (redirectTo) {
+    redirect(redirectTo);
+  }
 }
 
 export async function updateExchange(formData: FormData) {
+  const redirectTo = toOptionalText(formData.get("redirectTo"));
+
   try {
     const data = exchangeTransactionSchema.parse(toDataObject(formData));
-    ensure(data.transactionId, "??? id ??????????");
+    ensure(data.transactionId, "Нет id транзакции");
 
     const [fromAccount, toAccount] = await prisma.$transaction([
       prisma.account.findUnique({ where: { id: data.fromAccountId } }),
       prisma.account.findUnique({ where: { id: data.toAccountId } }),
     ]);
 
-    ensure(fromAccount, "???? ???????? ?? ??????");
-    ensure(toAccount, "???? ?????????? ?? ??????");
-    ensure(fromAccount.id !== toAccount.id, "????? ?????? ?????? ??????????");
-    ensure(fromAccount.currency !== toAccount.currency, "????? ?????? ???? ????? ??????? ????????");
+    ensure(fromAccount, "Счет списания не найден");
+    ensure(toAccount, "Счет зачисления не найден");
+    ensure(fromAccount.id !== toAccount.id, "Нельзя использовать один и тот же счет");
+    ensure(fromAccount.currency !== toAccount.currency, "Для обмена нужны счета в разных валютах");
 
     await prisma.transaction.update({
       where: { id: data.transactionId },
@@ -330,6 +381,10 @@ export async function updateExchange(formData: FormData) {
     revalidateApp();
   } catch (error) {
     throw normalizeError(error);
+  }
+
+  if (redirectTo) {
+    redirect(redirectTo);
   }
 }
 
@@ -461,9 +516,9 @@ export async function updateAccount(formData: FormData) {
       },
     });
 
-    ensure(existing, "???? ?? ??????");
+    ensure(existing, "Счет не найден");
     if (existing._count.legs > 0) {
-      ensure(existing.currency === data.currency, "?????? ?????? ?????? ????? ? ???????? ????????");
+      ensure(existing.currency === data.currency, "Нельзя менять валюту счета с историей операций");
     }
 
     await prisma.account.update({

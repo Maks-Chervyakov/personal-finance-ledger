@@ -1,27 +1,23 @@
-﻿import { LegDirection, TransactionType, type Account, type Category } from "@prisma/client";
+import Link from "next/link";
+import { LegDirection, TransactionType } from "@prisma/client";
 
-import {
-  deleteTransaction,
-  updateExchange,
-  updateExpense,
-  updateIncome,
-  updateTransfer,
-} from "@/app/actions";
-import {
-  ExchangeForm,
-  ExpenseForm,
-  IncomeForm,
-  TransferForm,
-} from "@/components/transaction-forms";
+import { deleteTransaction } from "@/app/actions";
 import { SubmitButton } from "@/components/submit-button";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/constants";
 import type { TransactionWithDetails } from "@/lib/data";
-import { decimalToNumber, decimalToString, formatDate, formatMoney } from "@/lib/utils";
+import { decimalToNumber, formatDate, formatMoney } from "@/lib/utils";
 
 type TransactionListProps = {
   transactions: TransactionWithDetails[];
-  accounts: Account[];
-  categories: Category[];
+  variant?: "feed" | "preview";
+  activeTransactionId?: string;
+  buildEditHref?: (transactionId: string) => string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyCtaHref?: string;
+  emptyCtaLabel?: string;
+  footerHref?: string;
+  footerLabel?: string;
 };
 
 function getLegs(transaction: TransactionWithDetails) {
@@ -36,13 +32,23 @@ function getSummary(transaction: TransactionWithDetails): string {
 
   switch (transaction.type) {
     case TransactionType.EXPENSE:
-      return `${out?.account.name ?? "Счет"} -> ${transaction.categorySnapshotName ?? "Без категории"} (${out ? formatMoney(out.amountDecimal, out.currency) : "—"})`;
+      return `${out?.account.name ?? "Счет"} -> ${
+        transaction.categorySnapshotName ?? "Без категории"
+      } (${out ? formatMoney(out.amountDecimal, out.currency) : "—"})`;
     case TransactionType.INCOME:
-      return `${incoming?.account.name ?? "Счет"} <- доход (${incoming ? formatMoney(incoming.amountDecimal, incoming.currency) : "—"})`;
+      return `${incoming?.account.name ?? "Счет"} <- доход (${
+        incoming ? formatMoney(incoming.amountDecimal, incoming.currency) : "—"
+      })`;
     case TransactionType.TRANSFER:
-      return `${out?.account.name ?? "Счет"} -> ${incoming?.account.name ?? "Счет"} (${out ? formatMoney(out.amountDecimal, out.currency) : "—"})`;
+      return `${out?.account.name ?? "Счет"} -> ${
+        incoming?.account.name ?? "Счет"
+      } (${out ? formatMoney(out.amountDecimal, out.currency) : "—"})`;
     case TransactionType.EXCHANGE:
-      return `${out?.account.name ?? "Счет"} -> ${incoming?.account.name ?? "Счет"} (${out ? formatMoney(out.amountDecimal, out.currency) : "—"} -> ${incoming ? formatMoney(incoming.amountDecimal, incoming.currency) : "—"})`;
+      return `${out?.account.name ?? "Счет"} -> ${
+        incoming?.account.name ?? "Счет"
+      } (${out ? formatMoney(out.amountDecimal, out.currency) : "—"} -> ${
+        incoming ? formatMoney(incoming.amountDecimal, incoming.currency) : "—"
+      })`;
     default:
       return TRANSACTION_TYPE_LABELS[transaction.type];
   }
@@ -68,128 +74,137 @@ function getRateLabel(transaction: TransactionWithDetails): string | null {
   return `Курс: 1 ${out.currency} = ${rate.toFixed(4)} ${incoming.currency}`;
 }
 
-export function TransactionList({ transactions, accounts, categories }: TransactionListProps) {
+export function TransactionList({
+  transactions,
+  variant = "feed",
+  activeTransactionId,
+  buildEditHref,
+  emptyTitle = "Операций пока нет",
+  emptyDescription = "Создай первую запись, чтобы журнал и аналитика ожили.",
+  emptyCtaHref,
+  emptyCtaLabel,
+  footerHref,
+  footerLabel,
+}: TransactionListProps) {
   if (transactions.length === 0) {
     return (
-      <section className="rounded-2xl border border-dashed border-white/10 bg-slate-900/70 p-6 text-sm text-slate-400">
-        За выбранный период нет операций. Добавь первую запись выше.
+      <section className="rounded-[28px] border border-dashed border-white/10 bg-slate-900/60 p-6 text-sm text-slate-300 shadow-xl shadow-slate-950/20">
+        <div className="space-y-3">
+          <div>
+            <h3 className="text-base font-semibold text-white">{emptyTitle}</h3>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+              {emptyDescription}
+            </p>
+          </div>
+          {emptyCtaHref && emptyCtaLabel ? (
+            <Link
+              href={emptyCtaHref}
+              className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-50 transition hover:border-cyan-300/60 hover:bg-cyan-400/15"
+            >
+              {emptyCtaLabel}
+            </Link>
+          ) : null}
+        </div>
       </section>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {transactions.map((transaction) => {
-        const { out, incoming } = getLegs(transaction);
         const categoryDeleted = Boolean(transaction.category?.isDeleted);
         const rateLabel = getRateLabel(transaction);
+        const isPreview = variant === "preview";
+        const editHref = buildEditHref?.(transaction.id);
+        const isActive = transaction.id === activeTransactionId;
 
         return (
-          <article key={transaction.id} className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-xl shadow-slate-950/20">
+          <article
+            key={transaction.id}
+            className={`rounded-[28px] border p-4 transition sm:p-5 ${
+              isPreview
+                ? "border-white/8 bg-slate-900/55"
+                : "bg-slate-900/70 shadow-xl shadow-slate-950/20"
+            } ${
+              isActive
+                ? "border-cyan-300/40 shadow-2xl shadow-cyan-950/30"
+                : "border-white/10"
+            }`}
+          >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/8 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-200">
+              <div className="min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="rounded-full border border-white/10 bg-white/6 px-3 py-1 font-medium uppercase tracking-[0.24em] text-slate-100">
                     {TRANSACTION_TYPE_LABELS[transaction.type]}
                   </span>
-                  <span className="text-sm text-slate-400">{formatDate(transaction.occurredAt)}</span>
-                  {categoryDeleted ? <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-300">Категория удалена</span> : null}
+                  <span className="rounded-full bg-cyan-400/10 px-3 py-1 font-medium text-cyan-100/90">
+                    {formatDate(transaction.occurredAt)}
+                  </span>
+                  {categoryDeleted ? (
+                    <span className="rounded-full bg-amber-500/14 px-3 py-1 font-medium text-amber-200">
+                      Категория удалена
+                    </span>
+                  ) : null}
                 </div>
-                <h3 className="text-lg font-semibold text-white">{getSummary(transaction)}</h3>
-                {transaction.note ? <p className="text-sm text-slate-300">{transaction.note}</p> : null}
-                {rateLabel ? <p className="text-sm text-blue-300">{rateLabel}</p> : null}
+
+                <h3
+                  className={`text-white ${
+                    isPreview ? "text-base font-medium" : "text-lg font-semibold"
+                  }`}
+                >
+                  {getSummary(transaction)}
+                </h3>
+
+                {transaction.note ? (
+                  <p className="max-w-3xl text-sm leading-6 text-slate-300">
+                    {transaction.note}
+                  </p>
+                ) : null}
+
+                {rateLabel ? (
+                  <p className="text-sm text-cyan-200">{rateLabel}</p>
+                ) : null}
               </div>
 
-              <form action={deleteTransaction}>
-                <input type="hidden" name="transactionId" value={transaction.id} />
-                <SubmitButton
-                  label="Удалить"
-                  pendingLabel="Удаляю..."
-                  className="rounded-xl border border-rose-500/40 px-4 py-2 text-sm font-medium text-rose-300 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-                />
-              </form>
+              {!isPreview ? (
+                <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                  {editHref ? (
+                    <Link
+                      href={editHref}
+                      className="rounded-full border border-white/12 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/5"
+                    >
+                      Редактировать
+                    </Link>
+                  ) : null}
+                  <form action={deleteTransaction}>
+                    <input
+                      type="hidden"
+                      name="transactionId"
+                      value={transaction.id}
+                    />
+                    <SubmitButton
+                      label="Удалить"
+                      pendingLabel="Удаляю..."
+                      className="rounded-full border border-rose-500/35 px-4 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </form>
+                </div>
+              ) : null}
             </div>
-
-            <details className="mt-5 rounded-2xl border border-white/6 bg-slate-950/40 p-4">
-              <summary className="cursor-pointer text-sm font-medium text-slate-200">Редактировать операцию</summary>
-              <div className="mt-4">
-                {transaction.type === TransactionType.EXPENSE && out ? (
-                  <ExpenseForm
-                    accounts={accounts}
-                    categories={categories}
-                    action={updateExpense}
-                    submitLabel="Сохранить расход"
-                    pendingLabel="Сохраняю..."
-                    compact
-                    initial={{
-                      transactionId: transaction.id,
-                      occurredOn: transaction.occurredAt.toISOString().slice(0, 10),
-                      note: transaction.note ?? "",
-                      accountId: out.accountId,
-                      categoryId: transaction.categoryId ?? undefined,
-                      amount: decimalToString(out.amountDecimal),
-                    }}
-                  />
-                ) : null}
-
-                {transaction.type === TransactionType.INCOME && incoming ? (
-                  <IncomeForm
-                    accounts={accounts}
-                    action={updateIncome}
-                    submitLabel="Сохранить доход"
-                    pendingLabel="Сохраняю..."
-                    compact
-                    initial={{
-                      transactionId: transaction.id,
-                      occurredOn: transaction.occurredAt.toISOString().slice(0, 10),
-                      note: transaction.note ?? "",
-                      accountId: incoming.accountId,
-                      amount: decimalToString(incoming.amountDecimal),
-                    }}
-                  />
-                ) : null}
-
-                {transaction.type === TransactionType.TRANSFER && out && incoming ? (
-                  <TransferForm
-                    accounts={accounts}
-                    action={updateTransfer}
-                    submitLabel="Сохранить перевод"
-                    pendingLabel="Сохраняю..."
-                    compact
-                    initial={{
-                      transactionId: transaction.id,
-                      occurredOn: transaction.occurredAt.toISOString().slice(0, 10),
-                      note: transaction.note ?? "",
-                      fromAccountId: out.accountId,
-                      toAccountId: incoming.accountId,
-                      amount: decimalToString(out.amountDecimal),
-                    }}
-                  />
-                ) : null}
-
-                {transaction.type === TransactionType.EXCHANGE && out && incoming ? (
-                  <ExchangeForm
-                    accounts={accounts}
-                    action={updateExchange}
-                    submitLabel="Сохранить обмен"
-                    pendingLabel="Сохраняю..."
-                    compact
-                    initial={{
-                      transactionId: transaction.id,
-                      occurredOn: transaction.occurredAt.toISOString().slice(0, 10),
-                      note: transaction.note ?? "",
-                      fromAccountId: out.accountId,
-                      toAccountId: incoming.accountId,
-                      fromAmount: decimalToString(out.amountDecimal),
-                      toAmount: decimalToString(incoming.amountDecimal),
-                    }}
-                  />
-                ) : null}
-              </div>
-            </details>
           </article>
         );
       })}
+
+      {footerHref && footerLabel ? (
+        <div className="pt-2">
+          <Link
+            href={footerHref}
+            className="inline-flex rounded-full border border-white/12 px-4 py-2 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/5 hover:text-white"
+          >
+            {footerLabel}
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
