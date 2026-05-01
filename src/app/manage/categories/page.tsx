@@ -1,6 +1,7 @@
 import {
   createCategory,
   deleteCategory,
+  hardDeleteCategory,
   restoreCategory,
   updateCategory,
 } from "@/app/actions";
@@ -170,14 +171,24 @@ export default async function ManageCategoriesPage() {
                     </p>
                   </div>
 
-                  <form action={restoreCategory}>
-                    <input type="hidden" name="categoryId" value={category.id} />
-                    <SubmitButton
-                      label="Восстановить"
-                      pendingLabel="Возвращаю..."
-                      className="rounded-full border border-emerald-500/35 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
-                    />
-                  </form>
+                  <div className="flex flex-wrap gap-2">
+                    <form action={restoreCategory}>
+                      <input type="hidden" name="categoryId" value={category.id} />
+                      <SubmitButton
+                        label={"\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c"}
+                        pendingLabel={"\u0412\u043e\u0437\u0432\u0440\u0430\u0449\u0430\u044e..."}
+                        className="rounded-full border border-emerald-500/35 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </form>
+                    <form action={hardDeleteCategory}>
+                      <input type="hidden" name="categoryId" value={category.id} />
+                      <SubmitButton
+                        label={"\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043f\u043e\u043b\u043d\u043e\u0441\u0442\u044c\u044e"}
+                        pendingLabel={"\u0423\u0434\u0430\u043b\u044f\u044e..."}
+                        className="rounded-full border border-rose-500/40 px-4 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+                    </form>
+                  </div>
                 </div>
               </article>
             ))}

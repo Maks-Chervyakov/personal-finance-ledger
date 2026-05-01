@@ -24,6 +24,7 @@ const APP_PATHS = [
   "/",
   "/operations",
   "/operations/new",
+  "/analytics",
   "/manage/accounts",
   "/manage/categories",
 ];
@@ -465,6 +466,34 @@ export async function restoreCategory(formData: FormData) {
         isDeleted: false,
         deletedAt: null,
       },
+    });
+    revalidateApp();
+  } catch (error) {
+    throw normalizeError(error);
+  }
+}
+
+export async function hardDeleteCategory(formData: FormData) {
+  try {
+    const data = categoryMutationSchema.parse(toDataObject(formData));
+    await prisma.$transaction(async (tx) => {
+      const category = await tx.category.findUnique({
+        where: { id: data.categoryId },
+        select: { id: true },
+      });
+
+      ensure(category, "РљР°С‚РµРіРѕСЂРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
+
+      await tx.transaction.deleteMany({
+        where: {
+          categoryId: category.id,
+        },
+      });
+      await tx.category.delete({
+        where: {
+          id: category.id,
+        },
+      });
     });
     revalidateApp();
   } catch (error) {

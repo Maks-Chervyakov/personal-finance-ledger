@@ -71,9 +71,23 @@ export type CurrencySummary = {
   incomeCount: number;
 };
 
+export type MonthlyCurrencyFlow = {
+  currency: Currency;
+  openingBalance: number;
+  incomeTotal: number;
+  expenseTotal: number;
+  movementInTotal: number;
+  movementOutTotal: number;
+  closingBalance: number;
+  balanceChange: number;
+  incomeExpenseDelta: number;
+  transactionCount: number;
+};
+
 export type OverviewData = {
   month: string;
   currencySummaries: CurrencySummary[];
+  monthlyFlows: MonthlyCurrencyFlow[];
   charts: ExpenseChartGroup[];
   accounts: AccountOverview[];
   recentTransactions: TransactionWithDetails[];
@@ -89,6 +103,13 @@ export type OperationsData = {
   categories: CategoryOverview[];
   transactions: TransactionWithDetails[];
   defaultIncomeAccountId?: string;
+};
+
+export type AnalyticsData = {
+  month: string;
+  flows: MonthlyCurrencyFlow[];
+  charts: ExpenseChartGroup[];
+  transactions: TransactionWithDetails[];
 };
 
 const CURRENCY_ORDER: Currency[] = [Currency.UAH, Currency.USD, Currency.USDT];
@@ -302,6 +323,86 @@ function buildCurrencySummaries(
   return CURRENCY_ORDER.map((currency) => summaryMap.get(currency)!);
 }
 
+function createEmptyFlow(currency: Currency): MonthlyCurrencyFlow {
+  return {
+    currency,
+    openingBalance: 0,
+    incomeTotal: 0,
+    expenseTotal: 0,
+    movementInTotal: 0,
+    movementOutTotal: 0,
+    closingBalance: 0,
+    balanceChange: 0,
+    incomeExpenseDelta: 0,
+    transactionCount: 0,
+  };
+}
+
+function buildMonthlyFlows(
+  month: string,
+  transactionsBeforeMonthEnd: TransactionWithDetails[],
+): MonthlyCurrencyFlow[] {
+  const { start, end } = getMonthRange(month);
+  const flowMap = new Map<Currency, MonthlyCurrencyFlow>(
+    CURRENCY_ORDER.map((currency) => [currency, createEmptyFlow(currency)]),
+  );
+
+  for (const transaction of transactionsBeforeMonthEnd) {
+    const isBeforeMonth = transaction.occurredAt < start;
+    const isInMonth =
+      transaction.occurredAt >= start && transaction.occurredAt < end;
+
+    for (const leg of transaction.legs) {
+      const flow = flowMap.get(leg.currency);
+      if (!flow) {
+        continue;
+      }
+
+      const amount = decimalToNumber(leg.amountDecimal);
+      const signedAmount = leg.direction === LegDirection.IN ? amount : -amount;
+
+      if (isBeforeMonth) {
+        flow.openingBalance += signedAmount;
+        flow.closingBalance += signedAmount;
+        continue;
+      }
+
+      if (!isInMonth) {
+        continue;
+      }
+
+      flow.closingBalance += signedAmount;
+
+      if (transaction.type === TransactionType.INCOME && leg.direction === LegDirection.IN) {
+        flow.incomeTotal += amount;
+      } else if (transaction.type === TransactionType.EXPENSE && leg.direction === LegDirection.OUT) {
+        flow.expenseTotal += amount;
+      } else if (leg.direction === LegDirection.IN) {
+        flow.movementInTotal += amount;
+      } else {
+        flow.movementOutTotal += amount;
+      }
+    }
+
+    if (isInMonth) {
+      const currencies = new Set(transaction.legs.map((leg) => leg.currency));
+      for (const currency of currencies) {
+        const flow = flowMap.get(currency);
+        if (flow) {
+          flow.transactionCount += 1;
+        }
+      }
+    }
+  }
+
+  for (const flow of flowMap.values()) {
+    flow.balanceChange = flow.closingBalance - flow.openingBalance;
+    flow.incomeExpenseDelta = flow.incomeTotal - flow.expenseTotal;
+  }
+
+  return CURRENCY_ORDER.map((currency) => flowMap.get(currency)!);
+}
+
 function getDefaultIncomeAccountId(accounts: AccountOverview[]): string | undefined {
   return (
     accounts.find(
@@ -345,11 +446,31 @@ export async function getOverviewData(month: string): Promise<OverviewData> {
     categoryIds: [],
   };
 
-  const [accountRows, categoryRows, transactions] = await prisma.$transaction([
+  const { end } = getMonthRange(month);
+  const [accountRows, categoryRows, transactions, transactionsBeforeMonthEnd] = await prisma.$transaction([
     ...getReferenceQueries(),
     prisma.transaction.findMany({
       where: buildTransactionWhere(filters),
       orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+      include: {
+        category: true,
+        legs: {
+          include: {
+            account: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        occurredAt: {
+          lt: end,
+        },
+      },
+      orderBy: [{ occurredAt: "asc" }, { createdAt: "asc" }],
       include: {
         category: true,
         legs: {
@@ -370,6 +491,7 @@ export async function getOverviewData(month: string): Promise<OverviewData> {
   return {
     month,
     currencySummaries: buildCurrencySummaries(transactions),
+    monthlyFlows: buildMonthlyFlows(month, transactionsBeforeMonthEnd),
     charts: buildExpenseCharts(transactions),
     accounts,
     recentTransactions: transactions.slice(0, 5),
@@ -377,6 +499,58 @@ export async function getOverviewData(month: string): Promise<OverviewData> {
     archivedAccountsCount: accounts.filter((account) => account.isArchived).length,
     totalCategoriesCount: categories.length,
     deletedCategoriesCount: categories.filter((category) => category.isDeleted).length,
+  };
+}
+
+export async function getAnalyticsData(month: string): Promise<AnalyticsData> {
+  const { start, end } = getMonthRange(month);
+  const [transactions, transactionsBeforeMonthEnd] = await prisma.$transaction([
+    prisma.transaction.findMany({
+      where: {
+        occurredAt: {
+          gte: start,
+          lt: end,
+        },
+      },
+      orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+      include: {
+        category: true,
+        legs: {
+          include: {
+            account: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    }),
+    prisma.transaction.findMany({
+      where: {
+        occurredAt: {
+          lt: end,
+        },
+      },
+      orderBy: [{ occurredAt: "asc" }, { createdAt: "asc" }],
+      include: {
+        category: true,
+        legs: {
+          include: {
+            account: true,
+          },
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    month,
+    flows: buildMonthlyFlows(month, transactionsBeforeMonthEnd),
+    charts: buildExpenseCharts(transactions),
+    transactions,
   };
 }
 

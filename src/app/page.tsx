@@ -7,6 +7,7 @@ import { ACCOUNT_KIND_LABELS } from "@/lib/constants";
 import {
   getOverviewData,
   parseOverviewMonth,
+  type MonthlyCurrencyFlow,
   type SearchParamMap,
 } from "@/lib/data";
 import { formatCount, formatMoney, getMonthLabel } from "@/lib/utils";
@@ -38,10 +39,23 @@ const currencyCardClasses: Record<
   },
 };
 
+function getLargestBalance(flows: MonthlyCurrencyFlow[]) {
+  return flows.reduce(
+    (best, flow) => (flow.closingBalance > best.closingBalance ? flow : best),
+    flows[0],
+  );
+}
+
 export default async function Home({ searchParams }: HomePageProps) {
   const month = parseOverviewMonth(await searchParams);
   const overview = await getOverviewData(month);
   const operationsHref = `/operations?month=${month}`;
+  const analyticsHref = `/analytics?month=${month}`;
+  const largestBalance = getLargestBalance(overview.monthlyFlows);
+  const maxBalance = Math.max(
+    ...overview.monthlyFlows.map((flow) => Math.abs(flow.closingBalance)),
+    1,
+  );
 
   return (
     <div className="space-y-8">
@@ -57,6 +71,46 @@ export default async function Home({ searchParams }: HomePageProps) {
             Основные показатели за выбранный период: доходы, расходы, счета и
             последние операции.
           </p>
+
+          <div className="mt-8 grid gap-3 md:grid-cols-[220px_1fr] md:items-center">
+            <div className="rounded-2xl border border-black/6 bg-stone-50 p-4">
+              <div className="text-xs uppercase tracking-[0.08em] text-stone-500">
+                Самый крупный остаток
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-stone-950">
+                {formatMoney(largestBalance.closingBalance, largestBalance.currency)}
+              </div>
+              <Link
+                href={analyticsHref}
+                className="mt-4 inline-flex rounded-full border border-black/8 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-white"
+              >
+                Детальная аналитика
+              </Link>
+            </div>
+
+            <div className="space-y-3">
+              {overview.monthlyFlows.map((flow) => {
+                const width = Math.max(4, (Math.abs(flow.closingBalance) / maxBalance) * 100);
+
+                return (
+                  <div key={flow.currency}>
+                    <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+                      <span className="font-semibold text-stone-900">{flow.currency}</span>
+                      <span className="text-stone-600">
+                        {formatMoney(flow.closingBalance, flow.currency)}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-stone-200">
+                      <div
+                        className={`h-full rounded-full ${flow.closingBalance >= 0 ? "bg-emerald-400" : "bg-amber-400"}`}
+                        style={{ width: `${width}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-slate-900/58 p-5 shadow-2xl shadow-slate-950/20 sm:p-6">
@@ -71,7 +125,7 @@ export default async function Home({ searchParams }: HomePageProps) {
             </div>
             <Link
               href="/operations/new"
-              className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-50 transition hover:border-cyan-300/60 hover:bg-cyan-400/15"
+              className="inline-flex items-center justify-center rounded-full border border-black/8 bg-stone-950 px-4 py-2 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-stone-800"
             >
               Новая операция
             </Link>
@@ -108,7 +162,7 @@ export default async function Home({ searchParams }: HomePageProps) {
                 {overview.activeAccountsCount}
               </div>
               <div className="mt-1 text-sm text-slate-400">
-                Архивных: {overview.archivedAccountsCount}
+                Балансы считаются по всем операциям
               </div>
             </div>
             <div className="rounded-3xl border border-white/8 bg-slate-950/45 p-4">
@@ -116,10 +170,10 @@ export default async function Home({ searchParams }: HomePageProps) {
                 Категории
               </div>
               <div className="mt-2 text-2xl font-semibold text-white">
-                {overview.totalCategoriesCount}
+                {overview.totalCategoriesCount - overview.deletedCategoriesCount}
               </div>
               <div className="mt-1 text-sm text-slate-400">
-                Удаленных: {overview.deletedCategoriesCount}
+                Используются для новых расходов
               </div>
             </div>
           </div>
@@ -133,7 +187,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               Сводка по валютам
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-white">
-              Доходы, расходы и итог
+              Движение и остатки
             </h2>
           </div>
           <Link
@@ -145,12 +199,12 @@ export default async function Home({ searchParams }: HomePageProps) {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
-          {overview.currencySummaries.map((summary) => {
-            const cardStyles = currencyCardClasses[summary.currency];
+          {overview.monthlyFlows.map((flow) => {
+            const cardStyles = currencyCardClasses[flow.currency];
 
             return (
               <article
-                key={summary.currency}
+                key={flow.currency}
                 className={`relative overflow-hidden rounded-[30px] border border-white/10 bg-slate-900/70 p-5 shadow-2xl ${cardStyles.glow}`}
               >
                 <div
@@ -161,14 +215,14 @@ export default async function Home({ searchParams }: HomePageProps) {
                     <span
                       className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] ${cardStyles.chip}`}
                     >
-                      {summary.currency}
+                      {flow.currency}
                     </span>
                     <span className="text-sm text-slate-400">
                       {formatCount(
-                        summary.expenseCount + summary.incomeCount,
-                        "операция",
-                        "операции",
-                        "операций",
+                        flow.transactionCount,
+                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u044f",
+                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0438",
+                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0439",
                       )}
                     </span>
                   </div>
@@ -176,38 +230,41 @@ export default async function Home({ searchParams }: HomePageProps) {
                   <div className="mt-5 grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Расход
+                        {"\u0411\u044b\u043b\u043e"}
+                      </div>
+                      <div className="mt-2 text-lg font-semibold text-white">
+                        {formatMoney(flow.openingBalance, flow.currency)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                        {"\u0420\u0430\u0441\u0445\u043e\u0434\u044b"}
                       </div>
                       <div className="mt-2 text-lg font-semibold text-rose-100">
-                        {formatMoney(summary.expenseTotal, summary.currency)}
+                        {formatMoney(flow.expenseTotal, flow.currency)}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Доход
-                      </div>
-                      <div className="mt-2 text-lg font-semibold text-emerald-100">
-                        {formatMoney(summary.incomeTotal, summary.currency)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        Итог
+                        {"\u041e\u0441\u0442\u0430\u0442\u043e\u043a"}
                       </div>
                       <div
                         className={`mt-2 text-lg font-semibold ${
-                          summary.netTotal >= 0 ? "text-cyan-100" : "text-amber-100"
+                          flow.closingBalance >= flow.openingBalance ? "text-emerald-100" : "text-amber-100"
                         }`}
                       >
-                        {formatMoney(summary.netTotal, summary.currency)}
+                        {formatMoney(flow.closingBalance, flow.currency)}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-black/6 bg-white/70 p-3 text-xs leading-5 text-stone-600">
+                    {"\u0414\u043e\u0445\u043e\u0434\u044b"}: {formatMoney(flow.incomeTotal, flow.currency)}. {"\u041f\u0435\u0440\u0435\u0432\u043e\u0434\u044b/\u043e\u0431\u043c\u0435\u043d\u044b"}: +{formatMoney(flow.movementInTotal, flow.currency)} / -{formatMoney(flow.movementOutTotal, flow.currency)}.
                   </div>
                 </div>
               </article>
             );
-          })}
-        </div>
+          })}        </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">

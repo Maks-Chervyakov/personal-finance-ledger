@@ -95,6 +95,7 @@ export default function RootLayout({
               <nav className="order-3 hidden w-full items-center gap-2 min-[560px]:flex lg:order-none lg:w-auto lg:flex-1 lg:justify-center">
                 <NavLink href="/" label="Обзор" />
                 <NavLink href="/operations" label="Операции" match="prefix" />
+                <NavLink href="/analytics" label="Аналитика" match="prefix" />
                 <NavLink
                   href="/manage/accounts"
                   label="Управление"
@@ -124,11 +125,11 @@ export default function RootLayout({
           </Link>
 
           <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/5 bg-white/94 px-3 pb-4 pt-3 backdrop-blur min-[560px]:hidden">
-            <nav className="mx-auto grid max-w-sm grid-cols-3 gap-2 rounded-2xl border border-black/8 bg-white p-2 shadow-lg">
+            <nav className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-2xl border border-black/8 bg-white p-2 shadow-lg">
               <NavLink
                 href="/"
                 label="Обзор"
-                className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
+                className="rounded-xl px-2 py-3 text-center text-xs font-semibold transition"
                 activeClassName="bg-stone-950 text-white shadow-sm"
                 inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
@@ -136,7 +137,15 @@ export default function RootLayout({
                 href="/operations"
                 label="Операции"
                 match="prefix"
-                className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
+                className="rounded-xl px-2 py-3 text-center text-xs font-semibold transition"
+                activeClassName="bg-stone-950 text-white shadow-sm"
+                inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
+              />
+              <NavLink
+                href="/analytics"
+                label="Аналитика"
+                match="prefix"
+                className="rounded-xl px-2 py-3 text-center text-xs font-semibold transition"
                 activeClassName="bg-stone-950 text-white shadow-sm"
                 inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
@@ -144,7 +153,7 @@ export default function RootLayout({
                 href="/manage/accounts"
                 label="Управление"
                 match="prefix"
-                className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
+                className="rounded-xl px-2 py-3 text-center text-xs font-semibold transition"
                 activeClassName="bg-stone-950 text-white shadow-sm"
                 inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
