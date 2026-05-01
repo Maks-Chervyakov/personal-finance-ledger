@@ -60,10 +60,103 @@ textarea {
   font: inherit;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  display: grid;
+  flex: 0 0 auto;
+  height: 1.05rem;
+  width: 1.05rem;
+  cursor: pointer;
+  place-content: center;
+  border: 1.5px solid rgba(25, 92, 83, 0.36) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f0e8 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(20, 20, 20, 0.08);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+input[type="checkbox"] {
+  border-radius: 0.35rem;
+}
+
+input[type="radio"] {
+  border-radius: 999px;
+}
+
+input[type="checkbox"]::before,
+input[type="radio"]::before {
+  content: "";
+  transform: scale(0);
+  transition: transform 140ms ease;
+}
+
+input[type="checkbox"]::before {
+  width: 0.52rem;
+  height: 0.32rem;
+  border-bottom: 2px solid #ffffff;
+  border-left: 2px solid #ffffff;
+  transform: translateY(-1px) rotate(-45deg) scale(0);
+}
+
+input[type="radio"]::before {
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  border-color: var(--accent-strong) !important;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%) !important;
+  box-shadow:
+    0 0 0 3px rgba(45, 125, 111, 0.13),
+    0 2px 5px rgba(20, 20, 20, 0.12);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: translateY(-1px) rotate(-45deg) scale(1);
+}
+
+input[type="radio"]:checked::before {
+  transform: scale(1);
+}
+
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: var(--accent) !important;
+  transform: translateY(-1px);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 3px solid rgba(45, 125, 111, 0.18) !important;
+  outline-offset: 2px;
+}
+
 select {
+  appearance: none;
   color: var(--ink);
   background-color: var(--surface);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--accent-strong) 50%),
+    linear-gradient(135deg, var(--accent-strong) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-repeat: no-repeat;
+  background-size:
+    6px 6px,
+    6px 6px;
   border: 1px solid var(--line);
+  cursor: pointer;
+  padding-right: 2.5rem !important;
   box-shadow: none;
 }
 
@@ -159,22 +252,26 @@ a {
 .text-cyan-300,
 .text-blue-300,
 .text-cyan-200,
+.text-cyan-50,
 .text-cyan-200\/70 {
   color: var(--accent-strong) !important;
 }
 
+.text-emerald-50,
 .text-emerald-100,
 .text-emerald-200,
 .text-emerald-300 {
   color: #166534 !important;
 }
 
+.text-amber-50,
 .text-amber-100,
 .text-amber-200,
 .text-amber-300 {
   color: #92400e !important;
 }
 
+.text-rose-50,
 .text-rose-100,
 .text-rose-200,
 .text-rose-300 {
@@ -307,7 +404,7 @@ a.bg-white:hover {
   letter-spacing: 0.08em !important;
 }
 
-input,
+input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   background-color: var(--surface) !important;
@@ -315,7 +412,7 @@ textarea {
   color: var(--ink) !important;
 }
 
-input:focus-visible,
+input:not([type="checkbox"]):not([type="radio"]):focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   border-color: var(--accent) !important;
