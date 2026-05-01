@@ -33,10 +33,14 @@
 
 html {
   min-height: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 body {
   min-height: 100%;
+  overflow-x: clip;
   background:
     linear-gradient(180deg, rgba(230, 243, 239, 0.75) 0%, rgba(251, 250, 247, 0) 260px),
     var(--background);
@@ -154,13 +158,27 @@ a {
 
 .text-cyan-300,
 .text-blue-300,
+.text-cyan-200,
+.text-cyan-200\/70 {
+  color: var(--accent-strong) !important;
+}
+
+.text-emerald-100,
 .text-emerald-200,
-.text-emerald-300,
+.text-emerald-300 {
+  color: #166534 !important;
+}
+
+.text-amber-100,
 .text-amber-200,
-.text-amber-300,
+.text-amber-300 {
+  color: #92400e !important;
+}
+
+.text-rose-100,
 .text-rose-200,
 .text-rose-300 {
-  color: var(--accent-strong) !important;
+  color: #b42318 !important;
 }
 
 .border-white\/6,
@@ -238,6 +256,33 @@ a {
 .bg-stone-800.text-white,
 .bg-black.text-white {
   color: #ffffff !important;
+}
+
+button.bg-white,
+a.bg-white {
+  border: 1px solid var(--line) !important;
+  background-color: var(--surface) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+button.bg-white:hover,
+a.bg-white:hover {
+  background-color: var(--surface-muted) !important;
+}
+
+.border-rose-500\/35,
+.border-rose-500\/40 {
+  border-color: rgba(180, 35, 24, 0.28) !important;
+}
+
+.border-amber-500\/35,
+.border-amber-500\/40 {
+  border-color: rgba(146, 64, 14, 0.28) !important;
+}
+
+.border-emerald-500\/35,
+.border-emerald-500\/40 {
+  border-color: rgba(22, 101, 52, 0.28) !important;
 }
 
 .rounded-\[32px\],

@@ -75,7 +75,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="min-h-screen bg-background text-foreground">
-        <div className="relative isolate min-h-screen overflow-x-hidden">
+        <div className="relative isolate min-h-screen">
           <header className="sticky top-0 z-40 border-b border-black/5 bg-white/88 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap lg:px-8">
               <Link href="/" className="min-w-0 flex-1 lg:flex-none">
