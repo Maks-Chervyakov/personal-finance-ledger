@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 function LogoMark() {
   return (
-    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-cyan-200/25 bg-slate-900 shadow-lg shadow-cyan-950/40">
+    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-black/8 bg-white shadow-sm">
       <svg
         viewBox="0 0 44 44"
         aria-hidden="true"
@@ -33,12 +33,12 @@ function LogoMark() {
       >
         <defs>
           <linearGradient id="logoGradient" x1="8" y1="8" x2="36" y2="36">
-            <stop offset="0" stopColor="#67e8f9" />
-            <stop offset="0.55" stopColor="#38bdf8" />
-            <stop offset="1" stopColor="#f8fafc" />
+            <stop offset="0" stopColor="#2d7d6f" />
+            <stop offset="0.62" stopColor="#6f8f7a" />
+            <stop offset="1" stopColor="#141414" />
           </linearGradient>
         </defs>
-        <rect x="5" y="5" width="34" height="34" rx="13" fill="#0b1220" />
+        <rect x="5" y="5" width="34" height="34" rx="13" fill="#fbfaf7" />
         <rect
           x="5"
           y="5"
@@ -74,18 +74,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen bg-slate-950 text-slate-100">
+      <body className="min-h-screen bg-background text-foreground">
         <div className="relative isolate min-h-screen overflow-x-hidden">
-          <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+          <header className="sticky top-0 z-40 border-b border-black/5 bg-white/88 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6 lg:flex-nowrap lg:px-8">
               <Link href="/" className="min-w-0 flex-1 lg:flex-none">
                 <div className="flex min-w-0 items-center gap-3">
                   <LogoMark />
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-cyan-200/80">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-stone-900">
                       Expense Tracker
                     </p>
-                    <p className="truncate text-sm text-slate-300">
+                    <p className="truncate text-sm text-stone-500">
                       Учет операций и счетов
                     </p>
                   </div>
@@ -104,7 +104,7 @@ export default function RootLayout({
 
               <Link
                 href="/operations/new"
-                className="hidden rounded-full border border-cyan-400/40 bg-cyan-400/12 px-4 py-2 text-sm font-semibold text-cyan-50 shadow-lg shadow-cyan-950/40 transition hover:border-cyan-300/70 hover:bg-cyan-400/18 min-[760px]:inline-flex"
+                className="hidden rounded-full border border-black/8 bg-stone-950 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-stone-800 min-[760px]:inline-flex"
               >
                 Новая операция
               </Link>
@@ -118,35 +118,35 @@ export default function RootLayout({
           <Link
             href="/operations/new"
             aria-label="Новая операция"
-            className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center rounded-full border border-cyan-200/40 bg-cyan-300 text-2xl font-light text-slate-950 shadow-2xl shadow-cyan-950/50 transition hover:scale-[1.02] min-[560px]:hidden"
+            className="fixed bottom-20 right-4 z-40 grid h-14 w-14 place-items-center rounded-full border border-black/8 bg-stone-950 text-2xl font-light text-white shadow-lg transition hover:scale-[1.02] min-[560px]:hidden"
           >
             +
           </Link>
 
-          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate-950/95 px-3 pb-4 pt-3 backdrop-blur min-[560px]:hidden">
-            <nav className="mx-auto grid max-w-sm grid-cols-3 gap-2 rounded-2xl border border-white/10 bg-slate-900 p-2 shadow-2xl shadow-black/40">
+          <div className="fixed inset-x-0 bottom-0 z-30 border-t border-black/5 bg-white/94 px-3 pb-4 pt-3 backdrop-blur min-[560px]:hidden">
+            <nav className="mx-auto grid max-w-sm grid-cols-3 gap-2 rounded-2xl border border-black/8 bg-white p-2 shadow-lg">
               <NavLink
                 href="/"
                 label="Обзор"
                 className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
-                activeClassName="bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30"
-                inactiveClassName="text-slate-100 hover:bg-white/8 hover:text-white"
+                activeClassName="bg-stone-950 text-white shadow-sm"
+                inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
               <NavLink
                 href="/operations"
                 label="Операции"
                 match="prefix"
                 className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
-                activeClassName="bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30"
-                inactiveClassName="text-slate-100 hover:bg-white/8 hover:text-white"
+                activeClassName="bg-stone-950 text-white shadow-sm"
+                inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
               <NavLink
                 href="/manage/accounts"
                 label="Управление"
                 match="prefix"
                 className="rounded-xl px-3 py-3 text-center text-xs font-semibold transition"
-                activeClassName="bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30"
-                inactiveClassName="text-slate-100 hover:bg-white/8 hover:text-white"
+                activeClassName="bg-stone-950 text-white shadow-sm"
+                inactiveClassName="text-stone-600 hover:bg-stone-100 hover:text-stone-950"
               />
             </nav>
           </div>

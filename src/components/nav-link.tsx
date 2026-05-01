@@ -30,13 +30,13 @@ export function NavLink({
 
   const baseClassName =
     className ??
-    "rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-200/55 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950";
+    "rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
   const activeStateClassName =
     activeClassName ??
-    "border border-cyan-200/40 bg-cyan-400/15 text-white shadow-lg shadow-cyan-950/30";
+    "border border-black/8 bg-stone-950 text-white shadow-sm";
   const inactiveStateClassName =
     inactiveClassName ??
-    "border border-white/12 bg-white/6 text-slate-200 hover:border-white/22 hover:bg-white/10 hover:text-white";
+    "border border-black/8 bg-white text-stone-600 hover:border-black/12 hover:bg-stone-100 hover:text-stone-950";
 
   return (
     <Link

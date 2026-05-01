@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: dark;
-  --background: #060816;
-  --foreground: #e8eef9;
+  color-scheme: light;
+  --background: #fbfaf7;
+  --foreground: #141414;
+  --surface: #ffffff;
+  --surface-muted: #f6f4ef;
+  --ink: #141414;
+  --muted: #5f625f;
+  --faint: #8a8d88;
+  --line: rgba(20, 20, 20, 0.08);
+  --line-soft: rgba(20, 20, 20, 0.055);
+  --accent: #2d7d6f;
+  --accent-strong: #195c53;
+  --accent-soft: #e6f3ef;
+  --blue-soft: #edf3ff;
+  --amber-soft: #fff4db;
+  --rose-soft: #fff0ef;
+  --shadow-soft: 0 2px 8px rgba(20, 20, 20, 0.045);
 }
 
 @theme inline {
@@ -24,26 +38,15 @@ html {
 body {
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(34, 211, 238, 0.12), transparent 30%),
-    radial-gradient(circle at top right, rgba(250, 204, 21, 0.08), transparent 22%),
-    radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.1), transparent 26%),
-    linear-gradient(180deg, #060816 0%, #0c1324 48%, #121b30 100%);
+    linear-gradient(180deg, rgba(230, 243, 239, 0.75) 0%, rgba(251, 250, 247, 0) 260px),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  text-rendering: geometricPrecision;
 }
 
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
-  background-position: center center;
-  background-size: 72px 72px;
-  mask-image: radial-gradient(circle at center, black, transparent 80%);
-  opacity: 0.45;
+  content: none;
 }
 
 button,
@@ -54,33 +57,33 @@ textarea {
 }
 
 select {
-  color: #f8fafc;
-  background-color: #121b2e;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+  color: var(--ink);
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: none;
 }
 
 select:focus-visible {
   outline: none;
-  border-color: rgba(103, 232, 249, 0.6);
+  border-color: var(--accent);
   box-shadow:
-    0 0 0 3px rgba(103, 232, 249, 0.14),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+    0 0 0 3px rgba(45, 125, 111, 0.14),
+    0 1px 2px rgba(20, 20, 20, 0.04);
 }
 
 select option {
-  color: #f8fafc;
-  background-color: #0b1220;
+  color: var(--ink);
+  background-color: var(--surface);
 }
 
 select option:checked {
-  color: #0b1220;
-  background-color: #67e8f9;
+  color: var(--ink);
+  background-color: var(--accent-soft);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #64748b;
+  color: var(--faint);
 }
 
 a {
@@ -89,12 +92,195 @@ a {
 }
 
 ::selection {
-  background: rgba(103, 232, 249, 0.28);
-  color: #f8fafc;
+  background: rgba(45, 125, 111, 0.18);
+  color: var(--ink);
 }
 
 .page-shell {
   animation: page-rise 220ms ease-out;
+}
+
+/* Visual system overrides: light, border-led, documentation-grade density. */
+.bg-slate-950,
+.bg-slate-950\/45,
+.bg-slate-950\/60,
+.bg-slate-950\/70,
+.bg-slate-950\/72,
+.bg-slate-950\/82,
+.bg-slate-950\/90,
+.bg-slate-950\/95,
+.bg-slate-950\/96,
+.bg-slate-900,
+.bg-slate-900\/55,
+.bg-slate-900\/58,
+.bg-slate-900\/60,
+.bg-slate-900\/62,
+.bg-slate-900\/65,
+.bg-slate-900\/70,
+.bg-slate-900\/72,
+.bg-slate-900\/75,
+.bg-slate-800 {
+  background-color: var(--surface) !important;
+}
+
+.bg-white\/4,
+.bg-white\/5,
+.bg-white\/6,
+.bg-white\/8,
+.bg-white\/10 {
+  background-color: var(--surface-muted) !important;
+}
+
+.text-white,
+.text-slate-50,
+.text-slate-100,
+.text-slate-200,
+.text-cyan-50,
+.text-cyan-100,
+.text-cyan-100\/90,
+.text-cyan-200,
+.text-cyan-200\/70,
+.text-emerald-100,
+.text-amber-100,
+.text-rose-100 {
+  color: var(--ink) !important;
+}
+
+.text-slate-300,
+.text-slate-400,
+.text-slate-500 {
+  color: var(--muted) !important;
+}
+
+.text-cyan-300,
+.text-blue-300,
+.text-emerald-200,
+.text-emerald-300,
+.text-amber-200,
+.text-amber-300,
+.text-rose-200,
+.text-rose-300 {
+  color: var(--accent-strong) !important;
+}
+
+.border-white\/6,
+.border-white\/8,
+.border-white\/10,
+.border-white\/12,
+.border-white\/14,
+.border-white\/20,
+.border-cyan-200\/25,
+.border-cyan-200\/40,
+.border-cyan-300\/25,
+.border-cyan-300\/40,
+.border-cyan-300\/60,
+.border-cyan-300\/70,
+.border-cyan-400\/30,
+.border-cyan-400\/40,
+.border-emerald-300\/25,
+.border-amber-200\/25,
+.border-rose-500\/35,
+.border-amber-500\/35,
+.border-emerald-500\/35 {
+  border-color: var(--line) !important;
+}
+
+.shadow-xl,
+.shadow-2xl,
+.shadow-lg {
+  box-shadow: var(--shadow-soft) !important;
+}
+
+.shadow-slate-950\/20,
+.shadow-slate-950\/25,
+.shadow-slate-950\/30,
+.shadow-cyan-950\/30,
+.shadow-cyan-950\/40,
+.shadow-cyan-950\/50,
+.shadow-emerald-950\/35,
+.shadow-amber-950\/30,
+.shadow-black\/40,
+.shadow-black\/50 {
+  --tw-shadow-color: rgba(20, 20, 20, 0.045) !important;
+}
+
+.bg-cyan-300,
+.bg-cyan-400\/10,
+.bg-cyan-400\/12,
+.bg-cyan-400\/15,
+.bg-cyan-400\/18,
+.bg-blue-500,
+.bg-blue-400 {
+  background-color: var(--accent-soft) !important;
+}
+
+.bg-emerald-400\/12 {
+  background-color: #e9f7ef !important;
+}
+
+.bg-amber-300\/12,
+.bg-amber-400\/12,
+.bg-amber-500\/14 {
+  background-color: var(--amber-soft) !important;
+}
+
+.bg-rose-500\/10,
+.bg-rose-500\/15 {
+  background-color: var(--rose-soft) !important;
+}
+
+.text-slate-950,
+.text-background {
+  color: var(--ink) !important;
+}
+
+.bg-stone-950.text-white,
+.bg-stone-800.text-white,
+.bg-black.text-white {
+  color: #ffffff !important;
+}
+
+.rounded-\[32px\],
+.rounded-\[30px\],
+.rounded-\[28px\],
+.rounded-\[26px\],
+.rounded-3xl,
+.rounded-2xl {
+  border-radius: 16px !important;
+}
+
+.rounded-xl {
+  border-radius: 12px !important;
+}
+
+.tracking-\[0\.32em\],
+.tracking-\[0\.28em\],
+.tracking-\[0\.26em\],
+.tracking-\[0\.24em\],
+.tracking-\[0\.22em\],
+.tracking-\[0\.2em\] {
+  letter-spacing: 0.08em !important;
+}
+
+input,
+select,
+textarea {
+  background-color: var(--surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent) !important;
+  outline: 2px solid rgba(45, 125, 111, 0.16) !important;
+  outline-offset: 1px;
+}
+
+button,
+a {
+  text-underline-offset: 3px;
 }
 
 @keyframes page-rise {
