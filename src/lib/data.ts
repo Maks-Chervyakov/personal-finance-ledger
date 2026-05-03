@@ -55,6 +55,17 @@ export type ChartSlice = {
   color: string;
 };
 
+export type BalanceChartSlice = ChartSlice & {
+  accountId: string;
+};
+
+export type BalanceChartGroup = {
+  currency: Currency;
+  totalPositiveBalance: number;
+  slices: BalanceChartSlice[];
+  nonPositiveAccounts: BalanceChartSlice[];
+};
+
 export type ExpenseChartGroup = {
   currency: Currency;
   title: string;
@@ -88,6 +99,7 @@ export type OverviewData = {
   month: string;
   currencySummaries: CurrencySummary[];
   monthlyFlows: MonthlyCurrencyFlow[];
+  balanceCharts: BalanceChartGroup[];
   charts: ExpenseChartGroup[];
   accounts: AccountOverview[];
   recentTransactions: TransactionWithDetails[];
@@ -323,6 +335,58 @@ function buildCurrencySummaries(
   return CURRENCY_ORDER.map((currency) => summaryMap.get(currency)!);
 }
 
+function buildBalanceCharts(
+  accounts: AccountOverview[],
+  transactionsBeforeMonthEnd: TransactionWithDetails[],
+): BalanceChartGroup[] {
+  const balanceMap = new Map<string, AccountOverview & { endBalance: number }>(
+    accounts.map((account) => [account.id, { ...account, endBalance: 0 }]),
+  );
+
+  for (const transaction of transactionsBeforeMonthEnd) {
+    for (const leg of transaction.legs) {
+      const account = balanceMap.get(leg.accountId);
+      if (!account) {
+        continue;
+      }
+
+      const amount = decimalToNumber(leg.amountDecimal);
+      account.endBalance += leg.direction === LegDirection.IN ? amount : -amount;
+    }
+  }
+
+  return CURRENCY_ORDER.map((currency) => {
+    const accountBalances = [...balanceMap.values()]
+      .filter((account) => account.currency === currency)
+      .sort((left, right) => right.endBalance - left.endBalance);
+
+    const slices = accountBalances
+      .filter((account) => account.endBalance > 0)
+      .map((account, index) => ({
+        accountId: account.id,
+        label: account.name,
+        value: account.endBalance,
+        color: PIE_COLORS[index % PIE_COLORS.length],
+      }));
+
+    const nonPositiveAccounts = accountBalances
+      .filter((account) => account.endBalance <= 0)
+      .map((account, index) => ({
+        accountId: account.id,
+        label: account.name,
+        value: account.endBalance,
+        color: PIE_COLORS[(slices.length + index) % PIE_COLORS.length],
+      }));
+
+    return {
+      currency,
+      totalPositiveBalance: slices.reduce((sum, slice) => sum + slice.value, 0),
+      slices,
+      nonPositiveAccounts,
+    };
+  });
+}
+
 function createEmptyFlow(currency: Currency): MonthlyCurrencyFlow {
   return {
     currency,
@@ -492,6 +556,7 @@ export async function getOverviewData(month: string): Promise<OverviewData> {
     month,
     currencySummaries: buildCurrencySummaries(transactions),
     monthlyFlows: buildMonthlyFlows(month, transactionsBeforeMonthEnd),
+    balanceCharts: buildBalanceCharts(accounts, transactionsBeforeMonthEnd),
     charts: buildExpenseCharts(transactions),
     accounts,
     recentTransactions: transactions.slice(0, 5),

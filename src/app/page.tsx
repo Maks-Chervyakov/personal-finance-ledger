@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Currency } from "@prisma/client";
 
+import { BalanceDonutGrid } from "@/components/balance-donut-grid";
+import { InfoTooltip } from "@/components/info-tooltip";
+import { MonthPickerField } from "@/components/month-picker-field";
 import { PieChart } from "@/components/pie-chart";
 import { TransactionList } from "@/components/transaction-list";
 import { ACCOUNT_KIND_LABELS } from "@/lib/constants";
@@ -39,10 +42,112 @@ const currencyCardClasses: Record<
   },
 };
 
-function getLargestBalance(flows: MonthlyCurrencyFlow[]) {
-  return flows.reduce(
-    (best, flow) => (flow.closingBalance > best.closingBalance ? flow : best),
-    flows[0],
+function FlowMetric({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "income" | "expense" | "movement";
+}) {
+  const toneClassName = {
+    default: "text-white",
+    income: "text-emerald-100",
+    expense: "text-rose-100",
+    movement: "text-amber-100",
+  }[tone];
+
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
+        {label}
+      </div>
+      <div className={`mt-2 text-lg font-semibold ${toneClassName}`}>{value}</div>
+    </div>
+  );
+}
+
+function getFlowTooltip(flow: MonthlyCurrencyFlow) {
+  return (
+    <span>
+      Осталось = было + прямые доходы + входящие переводы/обмены − расходы −
+      исходящие переводы/обмены. Для {flow.currency}: было{" "}
+      {formatMoney(flow.openingBalance, flow.currency)}, пришло{" "}
+      {formatMoney(flow.movementInTotal, flow.currency)}, прямой доход{" "}
+      {formatMoney(flow.incomeTotal, flow.currency)}, ушло{" "}
+      {formatMoney(flow.movementOutTotal, flow.currency)}, расходы{" "}
+      {formatMoney(flow.expenseTotal, flow.currency)}.
+    </span>
+  );
+}
+
+function FlowCard({ flow }: { flow: MonthlyCurrencyFlow }) {
+  const cardStyles = currencyCardClasses[flow.currency];
+  const closingTone = flow.closingBalance >= flow.openingBalance ? "income" : "movement";
+
+  return (
+    <article
+      className={`relative overflow-hidden rounded-[30px] border border-white/10 bg-slate-900/70 p-5 shadow-2xl ${cardStyles.glow}`}
+    >
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${cardStyles.accent}`}
+      />
+      <div className="relative">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] ${cardStyles.chip}`}
+            >
+              {flow.currency}
+            </span>
+            <InfoTooltip label={`Формула движения ${flow.currency}`}>
+              {getFlowTooltip(flow)}
+            </InfoTooltip>
+          </div>
+          <span className="text-sm text-slate-400">
+            {formatCount(flow.transactionCount, "операция", "операции", "операций")}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+          <FlowMetric label="Было" value={formatMoney(flow.openingBalance, flow.currency)} />
+          {flow.movementInTotal > 0 ? (
+            <FlowMetric
+              label="Пришло переводом/обменом"
+              value={formatMoney(flow.movementInTotal, flow.currency)}
+              tone="income"
+            />
+          ) : null}
+          {flow.incomeTotal > 0 ? (
+            <FlowMetric
+              label="Прямой доход"
+              value={formatMoney(flow.incomeTotal, flow.currency)}
+              tone="income"
+            />
+          ) : null}
+          {flow.movementOutTotal > 0 ? (
+            <FlowMetric
+              label="Ушло переводом/обменом"
+              value={formatMoney(flow.movementOutTotal, flow.currency)}
+              tone="movement"
+            />
+          ) : null}
+          {flow.expenseTotal > 0 ? (
+            <FlowMetric
+              label="Расходы"
+              value={formatMoney(flow.expenseTotal, flow.currency)}
+              tone="expense"
+            />
+          ) : null}
+          <FlowMetric
+            label="Осталось"
+            value={formatMoney(flow.closingBalance, flow.currency)}
+            tone={closingTone}
+          />
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -51,11 +156,6 @@ export default async function Home({ searchParams }: HomePageProps) {
   const overview = await getOverviewData(month);
   const operationsHref = `/operations?month=${month}`;
   const analyticsHref = `/analytics?month=${month}`;
-  const largestBalance = getLargestBalance(overview.monthlyFlows);
-  const maxBalance = Math.max(
-    ...overview.monthlyFlows.map((flow) => Math.abs(flow.closingBalance)),
-    1,
-  );
 
   return (
     <div className="space-y-8">
@@ -68,49 +168,18 @@ export default async function Home({ searchParams }: HomePageProps) {
             {getMonthLabel(month)}
           </h1>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-            Основные показатели за выбранный период: доходы, расходы, счета и
-            последние операции.
+            Остатки на конец выбранного месяца, движение средств и последние
+            операции.
           </p>
 
-          <div className="mt-8 grid gap-3 md:grid-cols-[220px_1fr] md:items-center">
-            <div className="rounded-2xl border border-black/6 bg-stone-50 p-4">
-              <div className="text-xs uppercase tracking-[0.08em] text-stone-500">
-                Самый крупный остаток
-              </div>
-              <div className="mt-2 text-2xl font-semibold text-stone-950">
-                {formatMoney(largestBalance.closingBalance, largestBalance.currency)}
-              </div>
-              <Link
-                href={analyticsHref}
-                className="mt-4 inline-flex rounded-full border border-black/8 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-white"
-              >
-                Детальная аналитика
-              </Link>
-            </div>
+          <BalanceDonutGrid groups={overview.balanceCharts} />
 
-            <div className="space-y-3">
-              {overview.monthlyFlows.map((flow) => {
-                const width = Math.max(4, (Math.abs(flow.closingBalance) / maxBalance) * 100);
-
-                return (
-                  <div key={flow.currency}>
-                    <div className="mb-1 flex items-center justify-between gap-3 text-sm">
-                      <span className="font-semibold text-stone-900">{flow.currency}</span>
-                      <span className="text-stone-600">
-                        {formatMoney(flow.closingBalance, flow.currency)}
-                      </span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-stone-200">
-                      <div
-                        className={`h-full rounded-full ${flow.closingBalance >= 0 ? "bg-emerald-400" : "bg-amber-400"}`}
-                        style={{ width: `${width}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <Link
+            href={analyticsHref}
+            className="mt-5 inline-flex rounded-full border border-black/8 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-white"
+          >
+            Детальная аналитика
+          </Link>
         </div>
 
         <div className="rounded-[32px] border border-white/10 bg-slate-900/58 p-5 shadow-2xl shadow-slate-950/20 sm:p-6">
@@ -136,11 +205,11 @@ export default async function Home({ searchParams }: HomePageProps) {
               <span className="block text-xs uppercase tracking-[0.22em] text-slate-500">
                 Месяц
               </span>
-              <input
-                type="month"
+              <MonthPickerField
+                key={month}
                 name="month"
                 defaultValue={month}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition focus:border-cyan-300"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5 text-left text-sm font-medium text-white outline-none transition hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20"
               />
             </label>
             <div className="sm:self-end">
@@ -199,72 +268,10 @@ export default async function Home({ searchParams }: HomePageProps) {
         </div>
 
         <div className="grid gap-4 xl:grid-cols-3">
-          {overview.monthlyFlows.map((flow) => {
-            const cardStyles = currencyCardClasses[flow.currency];
-
-            return (
-              <article
-                key={flow.currency}
-                className={`relative overflow-hidden rounded-[30px] border border-white/10 bg-slate-900/70 p-5 shadow-2xl ${cardStyles.glow}`}
-              >
-                <div
-                  className={`pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-br ${cardStyles.accent}`}
-                />
-                <div className="relative">
-                  <div className="flex items-center justify-between gap-3">
-                    <span
-                      className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.22em] ${cardStyles.chip}`}
-                    >
-                      {flow.currency}
-                    </span>
-                    <span className="text-sm text-slate-400">
-                      {formatCount(
-                        flow.transactionCount,
-                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u044f",
-                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0438",
-                        "\u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0439",
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="mt-5 grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        {"\u0411\u044b\u043b\u043e"}
-                      </div>
-                      <div className="mt-2 text-lg font-semibold text-white">
-                        {formatMoney(flow.openingBalance, flow.currency)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        {"\u0420\u0430\u0441\u0445\u043e\u0434\u044b"}
-                      </div>
-                      <div className="mt-2 text-lg font-semibold text-rose-100">
-                        {formatMoney(flow.expenseTotal, flow.currency)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                        {"\u041e\u0441\u0442\u0430\u0442\u043e\u043a"}
-                      </div>
-                      <div
-                        className={`mt-2 text-lg font-semibold ${
-                          flow.closingBalance >= flow.openingBalance ? "text-emerald-100" : "text-amber-100"
-                        }`}
-                      >
-                        {formatMoney(flow.closingBalance, flow.currency)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-2xl border border-black/6 bg-white/70 p-3 text-xs leading-5 text-stone-600">
-                    {"\u0414\u043e\u0445\u043e\u0434\u044b"}: {formatMoney(flow.incomeTotal, flow.currency)}. {"\u041f\u0435\u0440\u0435\u0432\u043e\u0434\u044b/\u043e\u0431\u043c\u0435\u043d\u044b"}: +{formatMoney(flow.movementInTotal, flow.currency)} / -{formatMoney(flow.movementOutTotal, flow.currency)}.
-                  </div>
-                </div>
-              </article>
-            );
-          })}        </div>
+          {overview.monthlyFlows.map((flow) => (
+            <FlowCard key={flow.currency} flow={flow} />
+          ))}
+        </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">

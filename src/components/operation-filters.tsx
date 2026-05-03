@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TransactionType } from "@prisma/client";
 
+import { MonthPickerField } from "@/components/month-picker-field";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/constants";
 import type {
   AccountOverview,
@@ -71,8 +72,8 @@ export function OperationFilters({
           <span className="block text-xs uppercase tracking-[0.22em] text-slate-500">
             Месяц
           </span>
-          <input
-            type="month"
+          <MonthPickerField
+            key={filters.month}
             name="month"
             defaultValue={filters.month}
             className="w-full rounded-2xl border border-white/10 bg-white/6 px-3 py-2.5 text-sm font-medium text-white outline-none transition focus:border-cyan-300 focus:bg-white/8"

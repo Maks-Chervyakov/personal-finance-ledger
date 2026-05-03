@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { InfoTooltip } from "@/components/info-tooltip";
+import { MonthPickerField } from "@/components/month-picker-field";
 import { PieChart } from "@/components/pie-chart";
 import {
   getAnalyticsData,
@@ -15,67 +17,67 @@ type AnalyticsPageProps = {
   searchParams: Promise<SearchParamMap>;
 };
 
-const TEXT = {
-  analytics: "\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u043a\u0430",
-  titlePrefix: "\u0414\u0432\u0438\u0436\u0435\u043d\u0438\u0435 \u0441\u0440\u0435\u0434\u0441\u0442\u0432 \u0437\u0430",
-  intro:
-    "\u041c\u0435\u0441\u044f\u0446 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u0447\u0435\u0440\u0435\u0437 \u043d\u0430\u0447\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a, \u0434\u043e\u0445\u043e\u0434\u044b, \u0440\u0430\u0441\u0445\u043e\u0434\u044b, \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u044b/\u043e\u0431\u043c\u0435\u043d\u044b \u0438 \u043a\u043e\u043d\u0435\u0447\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a. \u0422\u0430\u043a \u0432\u0438\u0434\u043d\u043e, \u0442\u0440\u0430\u0442\u0438\u043b\u0438\u0441\u044c \u043b\u0438 \u0434\u0435\u043d\u044c\u0433\u0438 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u043c\u0435\u0441\u044f\u0446\u0430 \u0438\u043b\u0438 \u043e\u0441\u0442\u0430\u0442\u043a\u0438 \u043f\u0440\u043e\u0448\u043b\u044b\u0445 \u043f\u0435\u0440\u0438\u043e\u0434\u043e\u0432.",
-  month: "\u041c\u0435\u0441\u044f\u0446",
-  show: "\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c",
-  endBalance: "\u041e\u0441\u0442\u0430\u0442\u043e\u043a \u043d\u0430 \u043a\u043e\u043d\u0435\u0446 \u043c\u0435\u0441\u044f\u0446\u0430",
-  overspend: "\u0421\u0432\u0435\u0440\u0445 \u0442\u0440\u0430\u0442\u044b",
-  saved: "\u0423\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043b\u043e\u0436\u0438\u0442\u044c",
-  balanced: "\u0412 \u043d\u043e\u043b\u044c",
-  overspendDescription:
-    "\u0420\u0430\u0441\u0445\u043e\u0434\u044b \u0432\u044b\u0448\u0435 \u043f\u0440\u044f\u043c\u044b\u0445 \u0434\u043e\u0445\u043e\u0434\u043e\u0432. \u0420\u0430\u0437\u043d\u0438\u0446\u0430 \u043f\u043e\u043a\u0440\u044b\u0442\u0430 \u043e\u0441\u0442\u0430\u0442\u043a\u043e\u043c \u043f\u0440\u043e\u0448\u043b\u044b\u0445 \u043c\u0435\u0441\u044f\u0446\u0435\u0432 \u0438\u043b\u0438 \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u0430\u043c\u0438/\u043e\u0431\u043c\u0435\u043d\u0430\u043c\u0438.",
-  savedDescription:
-    "\u041f\u0440\u044f\u043c\u044b\u0435 \u0434\u043e\u0445\u043e\u0434\u044b \u0432\u044b\u0448\u0435 \u0440\u0430\u0441\u0445\u043e\u0434\u043e\u0432. \u042d\u0442\u043e \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b\u044c\u043d\u0430\u044f \u0441\u0443\u043c\u043c\u0430 \u043d\u0430\u043a\u043e\u043f\u043b\u0435\u043d\u0438\u044f \u0432 \u044d\u0442\u043e\u0439 \u0432\u0430\u043b\u044e\u0442\u0435.",
-  balancedDescription: "\u041f\u0440\u044f\u043c\u044b\u0435 \u0434\u043e\u0445\u043e\u0434\u044b \u0438 \u0440\u0430\u0441\u0445\u043e\u0434\u044b \u0437\u0430 \u043c\u0435\u0441\u044f\u0446 \u0441\u0431\u0430\u043b\u0430\u043d\u0441\u0438\u0440\u043e\u0432\u0430\u043d\u044b.",
-  opening: "\u0411\u044b\u043b\u043e",
-  change: "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435",
-  income: "\u0414\u043e\u0445\u043e\u0434\u044b",
-  expenses: "\u0420\u0430\u0441\u0445\u043e\u0434\u044b",
-  movement: "\u0414\u0432\u0438\u0436\u0435\u043d\u0438\u0435 \u043c\u0435\u0436\u0434\u0443 \u0441\u0447\u0435\u0442\u0430\u043c\u0438",
-  came: "\u043f\u0440\u0438\u0448\u043b\u043e",
-  left: "\u0443\u0448\u043b\u043e",
-  categories: "\u041a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438",
-  monthExpenses: "\u0420\u0430\u0441\u0445\u043e\u0434\u044b \u0437\u0430 \u043c\u0435\u0441\u044f\u0446",
-  noExpenses: "\u0417\u0430 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u0439 \u043c\u0435\u0441\u044f\u0446 \u0440\u0430\u0441\u0445\u043e\u0434\u043e\u0432 \u043d\u0435\u0442.",
-  howToRead: "\u041a\u0430\u043a \u0447\u0438\u0442\u0430\u0442\u044c",
-  monthLogic: "\u041b\u043e\u0433\u0438\u043a\u0430 \u043c\u0435\u0441\u044f\u0446\u0430",
-  rule1: "\u041d\u0430\u0447\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a ? \u0432\u0441\u0435 \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0438 \u0434\u043e \u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0434\u043d\u044f \u043c\u0435\u0441\u044f\u0446\u0430.",
-  rule2: "\u041a\u043e\u043d\u0435\u0447\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a ? \u043d\u0430\u0447\u0430\u043b\u044c\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0442\u043e\u043a \u043f\u043b\u044e\u0441 \u0432\u0441\u0435 \u0434\u0432\u0438\u0436\u0435\u043d\u0438\u044f \u0432\u043d\u0443\u0442\u0440\u0438 \u043c\u0435\u0441\u044f\u0446\u0430.",
-  rule3: "\u0415\u0441\u043b\u0438 \u0440\u0430\u0441\u0445\u043e\u0434\u044b \u0431\u043e\u043b\u044c\u0448\u0435 \u0434\u043e\u0445\u043e\u0434\u043e\u0432, \u043c\u0435\u0441\u044f\u0446 \u0447\u0430\u0441\u0442\u0438\u0447\u043d\u043e \u043e\u043f\u043b\u0430\u0447\u0435\u043d \u043e\u0441\u0442\u0430\u0442\u043a\u0430\u043c\u0438 \u043f\u0440\u043e\u0448\u043b\u044b\u0445 \u043f\u0435\u0440\u0438\u043e\u0434\u043e\u0432 \u0438\u043b\u0438 \u043e\u0431\u043c\u0435\u043d\u0430\u043c\u0438.",
-  rule4: "\u0415\u0441\u043b\u0438 \u0434\u043e\u0445\u043e\u0434\u044b \u0431\u043e\u043b\u044c\u0448\u0435 \u0440\u0430\u0441\u0445\u043e\u0434\u043e\u0432, \u0440\u0430\u0437\u043d\u0438\u0446\u0430 \u0441\u0447\u0438\u0442\u0430\u0435\u0442\u0441\u044f \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b\u044c\u043d\u044b\u043c \u043d\u0430\u043a\u043e\u043f\u043b\u0435\u043d\u0438\u0435\u043c.",
-  openOperations: "\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u0438",
-};
-
-function getFlowStatus(flow: MonthlyCurrencyFlow) {
-  if (flow.incomeExpenseDelta < 0) {
+function getBalanceStatus(flow: MonthlyCurrencyFlow) {
+  if (flow.balanceChange > 0) {
     return {
-      label: TEXT.overspend,
-      className: "border-amber-500/35 bg-amber-300/12 text-amber-100",
-      description: TEXT.overspendDescription,
+      label: "Баланс вырос",
+      className: "border-emerald-500/35 bg-emerald-400/12 text-emerald-100",
+      description:
+        "Остаток на конец месяца выше начального. После всех доходов, расходов, переводов и обменов эта валюта увеличилась.",
     };
   }
 
-  if (flow.incomeExpenseDelta > 0) {
+  if (flow.balanceChange < 0) {
     return {
-      label: TEXT.saved,
-      className: "border-emerald-500/35 bg-emerald-400/12 text-emerald-100",
-      description: TEXT.savedDescription,
+      label: "Баланс снизился",
+      className: "border-amber-500/35 bg-amber-300/12 text-amber-100",
+      description:
+        "Остаток на конец месяца ниже начального. Это означает, что часть расходов или исходящих движений была покрыта средствами прошлых периодов.",
     };
   }
 
   return {
-    label: TEXT.balanced,
+    label: "Без изменений",
     className: "border-black/8 bg-stone-100 text-stone-700",
-    description: TEXT.balancedDescription,
+    description: "Остаток на начало и конец месяца совпадает.",
   };
 }
 
+function FlowMetric({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "default" | "income" | "expense" | "movement";
+}) {
+  const toneClassName = {
+    default: "text-stone-950",
+    income: "text-emerald-100",
+    expense: "text-rose-100",
+    movement: "text-amber-100",
+  }[tone];
+
+  return (
+    <div className="rounded-xl border border-black/6 bg-stone-50 p-3">
+      <div className="text-xs uppercase tracking-[0.08em] text-stone-500">{label}</div>
+      <div className={`mt-1 font-semibold ${toneClassName}`}>{value}</div>
+    </div>
+  );
+}
+
+function FormulaTooltip({ flow }: { flow: MonthlyCurrencyFlow }) {
+  return (
+    <InfoTooltip label={`Формула ${flow.currency}`}>
+      Осталось = было + прямые доходы + входящие переводы/обмены − расходы −
+      исходящие переводы/обмены. Разница за месяц = осталось − было.
+    </InfoTooltip>
+  );
+}
+
 function FlowCard({ flow }: { flow: MonthlyCurrencyFlow }) {
-  const status = getFlowStatus(flow);
+  const status = getBalanceStatus(flow);
 
   return (
     <article className="rounded-2xl border border-black/6 bg-white p-5 shadow-sm">
@@ -87,48 +89,47 @@ function FlowCard({ flow }: { flow: MonthlyCurrencyFlow }) {
           <h2 className="mt-4 text-xl font-semibold text-stone-950">
             {formatMoney(flow.closingBalance, flow.currency)}
           </h2>
-          <p className="mt-1 text-sm text-stone-500">{TEXT.endBalance}</p>
+          <p className="mt-1 text-sm text-stone-500">Остаток на конец месяца</p>
         </div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${status.className}`}>
-          {status.label}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${status.className}`}>
+            {status.label}
+          </span>
+          <FormulaTooltip flow={flow} />
+        </div>
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-black/6 bg-stone-50 p-3">
-          <div className="text-xs uppercase tracking-[0.08em] text-stone-500">{TEXT.opening}</div>
-          <div className="mt-1 font-semibold text-stone-950">
-            {formatMoney(flow.openingBalance, flow.currency)}
-          </div>
-        </div>
-        <div className="rounded-xl border border-black/6 bg-stone-50 p-3">
-          <div className="text-xs uppercase tracking-[0.08em] text-stone-500">{TEXT.change}</div>
-          <div className={`mt-1 font-semibold ${flow.balanceChange >= 0 ? "text-emerald-100" : "text-amber-100"}`}>
-            {formatMoney(flow.balanceChange, flow.currency)}
-          </div>
-        </div>
-        <div className="rounded-xl border border-emerald-500/35 bg-emerald-400/12 p-3">
-          <div className="text-xs uppercase tracking-[0.08em] text-stone-500">{TEXT.income}</div>
-          <div className="mt-1 font-semibold text-emerald-100">
-            {formatMoney(flow.incomeTotal, flow.currency)}
-          </div>
-        </div>
-        <div className="rounded-xl border border-rose-500/35 bg-rose-500/10 p-3">
-          <div className="text-xs uppercase tracking-[0.08em] text-stone-500">{TEXT.expenses}</div>
-          <div className="mt-1 font-semibold text-rose-100">
-            {formatMoney(flow.expenseTotal, flow.currency)}
-          </div>
-        </div>
+        <FlowMetric label="Было" value={formatMoney(flow.openingBalance, flow.currency)} />
+        <FlowMetric
+          label="Разница за месяц"
+          value={`${flow.balanceChange > 0 ? "+" : ""}${formatMoney(flow.balanceChange, flow.currency)}`}
+          tone={flow.balanceChange >= 0 ? "income" : "movement"}
+        />
+        {flow.movementInTotal > 0 ? (
+          <FlowMetric
+            label="Пришло переводом/обменом"
+            value={formatMoney(flow.movementInTotal, flow.currency)}
+            tone="income"
+          />
+        ) : null}
+        {flow.incomeTotal > 0 ? (
+          <FlowMetric label="Прямой доход" value={formatMoney(flow.incomeTotal, flow.currency)} tone="income" />
+        ) : null}
+        {flow.movementOutTotal > 0 ? (
+          <FlowMetric
+            label="Ушло переводом/обменом"
+            value={formatMoney(flow.movementOutTotal, flow.currency)}
+            tone="movement"
+          />
+        ) : null}
+        {flow.expenseTotal > 0 ? (
+          <FlowMetric label="Расходы" value={formatMoney(flow.expenseTotal, flow.currency)} tone="expense" />
+        ) : null}
       </div>
 
       <div className="mt-4 rounded-xl border border-black/6 bg-white p-3 text-sm leading-6 text-stone-600">
         {status.description}
-        {(flow.movementInTotal > 0 || flow.movementOutTotal > 0) ? (
-          <span>
-            {" "}{TEXT.movement}: {TEXT.came} {formatMoney(flow.movementInTotal, flow.currency)}, {TEXT.left}{" "}
-            {formatMoney(flow.movementOutTotal, flow.currency)}.
-          </span>
-        ) : null}
       </div>
     </article>
   );
@@ -143,30 +144,32 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       <section className="rounded-2xl border border-black/6 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">{TEXT.analytics}</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">Аналитика</p>
             <h1 className="mt-3 text-3xl font-semibold text-stone-950 sm:text-4xl">
-              {TEXT.titlePrefix} {getMonthLabel(month)}
+              Движение средств за {getMonthLabel(month)}
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-stone-600 sm:text-base">
-              {TEXT.intro}
+              Месяц считается через начальный остаток, доходы, расходы,
+              переводы/обмены и конечный остаток. Так видно, вырос баланс или
+              были сверх траты за счет прошлых остатков.
             </p>
           </div>
 
           <form method="get" className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <label className="space-y-2 text-sm text-stone-600">
-              <span className="block text-xs uppercase tracking-[0.08em] text-stone-500">{TEXT.month}</span>
-              <input
-                type="month"
+              <span className="block text-xs uppercase tracking-[0.08em] text-stone-500">Месяц</span>
+              <MonthPickerField
+                key={month}
                 name="month"
                 defaultValue={month}
-                className="w-full rounded-2xl border border-black/8 bg-white px-3 py-2.5 text-sm text-stone-950 outline-none transition focus:border-cyan-300 sm:w-56"
+                className="flex w-full items-center justify-between gap-3 rounded-2xl border border-black/8 bg-white px-3 py-2.5 text-left text-sm font-medium text-stone-950 shadow-sm transition hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 sm:w-56"
               />
             </label>
             <button
               type="submit"
               className="rounded-full border border-black/8 bg-stone-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800"
             >
-              {TEXT.show}
+              Показать
             </button>
           </form>
         </div>
@@ -181,8 +184,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">{TEXT.categories}</p>
-            <h2 className="mt-2 text-2xl font-semibold text-stone-950">{TEXT.monthExpenses}</h2>
+            <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">Категории</p>
+            <h2 className="mt-2 text-2xl font-semibold text-stone-950">Расходы за месяц</h2>
           </div>
           <div className="grid gap-4 2xl:grid-cols-2">
             {analytics.charts.length > 0 ? (
@@ -197,26 +200,26 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
               ))
             ) : (
               <div className="rounded-2xl border border-dashed border-black/8 bg-white px-5 py-10 text-sm text-stone-500">
-                {TEXT.noExpenses}
+                За выбранный месяц расходов нет.
               </div>
             )}
           </div>
         </div>
 
         <aside className="rounded-2xl border border-black/6 bg-white p-5 shadow-sm">
-          <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">{TEXT.howToRead}</p>
-          <h2 className="mt-2 text-2xl font-semibold text-stone-950">{TEXT.monthLogic}</h2>
+          <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">Как читать</p>
+          <h2 className="mt-2 text-2xl font-semibold text-stone-950">Логика месяца</h2>
           <div className="mt-4 space-y-3 text-sm leading-6 text-stone-600">
-            <p>{TEXT.rule1}</p>
-            <p>{TEXT.rule2}</p>
-            <p>{TEXT.rule3}</p>
-            <p>{TEXT.rule4}</p>
+            <p>Начальный остаток — все операции до первого дня месяца.</p>
+            <p>Конечный остаток — начальный остаток плюс все движения внутри месяца.</p>
+            <p>Если баланс снизился, месяц частично оплачен остатками прошлых периодов или исходящими обменами.</p>
+            <p>Если баланс вырос, разница считается потенциальным накоплением в этой валюте.</p>
           </div>
           <Link
             href={`/operations?month=${month}`}
             className="mt-5 inline-flex rounded-full border border-black/8 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
           >
-            {TEXT.openOperations}
+            Открыть операции
           </Link>
         </aside>
       </section>

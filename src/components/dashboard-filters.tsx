@@ -1,5 +1,6 @@
 ﻿import { TransactionType } from "@prisma/client";
 
+import { MonthPickerField } from "@/components/month-picker-field";
 import type { AccountOverview, CategoryOverview, DashboardFilters } from "@/lib/data";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/constants";
 
@@ -29,8 +30,8 @@ export function DashboardFilters({ filters, accounts, categories }: DashboardFil
         <div className="grid gap-4 md:grid-cols-[220px_1fr]">
           <label className="space-y-2 text-sm text-slate-300">
             <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">Месяц</span>
-            <input
-              type="month"
+            <MonthPickerField
+              key={filters.month}
               name="month"
               defaultValue={filters.month}
               className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-white outline-none transition focus:border-blue-400"

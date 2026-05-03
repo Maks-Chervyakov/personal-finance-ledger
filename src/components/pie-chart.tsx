@@ -1,6 +1,6 @@
-import { type Currency } from "@prisma/client";
+"use client";
 
-import { formatMoney } from "@/lib/utils";
+import { useMemo, useState } from "react";
 
 type Slice = {
   label: string;
@@ -10,31 +10,70 @@ type Slice = {
 
 type PieChartProps = {
   title: string;
-  currency: Currency;
+  currency: string;
   total: number;
   slices: Slice[];
 };
 
-function buildGradient(slices: Slice[]): string {
-  if (slices.length === 0) {
-    return "conic-gradient(#e7e5df 0deg 360deg)";
-  }
+function formatMoney(value: number, currency: string) {
+  return `${new Intl.NumberFormat("uk-UA", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  }).format(value)} ${currency}`;
+}
 
-  const total = slices.reduce((sum, item) => sum + item.value, 0);
-  let offset = 0;
+function polarToCartesian(cx: number, cy: number, radius: number, angle: number) {
+  const radians = ((angle - 90) * Math.PI) / 180;
+  return {
+    x: cx + radius * Math.cos(radians),
+    y: cy + radius * Math.sin(radians),
+  };
+}
 
-  const parts = slices.map((slice) => {
-    const angle = slice.value === 0 || total === 0 ? 0 : (slice.value / total) * 360;
-    const start = offset;
-    offset += angle;
-    return `${slice.color} ${start}deg ${offset}deg`;
+function describeDonutSegment(
+  cx: number,
+  cy: number,
+  outerRadius: number,
+  innerRadius: number,
+  startAngle: number,
+  endAngle: number,
+) {
+  const safeEndAngle = endAngle - startAngle >= 360 ? startAngle + 359.99 : endAngle;
+  const outerStart = polarToCartesian(cx, cy, outerRadius, startAngle);
+  const outerEnd = polarToCartesian(cx, cy, outerRadius, safeEndAngle);
+  const innerStart = polarToCartesian(cx, cy, innerRadius, startAngle);
+  const innerEnd = polarToCartesian(cx, cy, innerRadius, safeEndAngle);
+  const largeArcFlag = safeEndAngle - startAngle > 180 ? 1 : 0;
+
+  return [
+    `M ${outerStart.x} ${outerStart.y}`,
+    `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${outerEnd.x} ${outerEnd.y}`,
+    `L ${innerEnd.x} ${innerEnd.y}`,
+    `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}`,
+    "Z",
+  ].join(" ");
+}
+
+function buildSegments(slices: Slice[], total: number) {
+  let cursor = 0;
+
+  return slices.map((slice) => {
+    const angle = total > 0 ? (slice.value / total) * 360 : 0;
+    const segment = {
+      ...slice,
+      startAngle: cursor,
+      endAngle: cursor + angle,
+    };
+
+    cursor += angle;
+    return segment;
   });
-
-  return `conic-gradient(${parts.join(", ")})`;
 }
 
 export function PieChart({ title, currency, total, slices }: PieChartProps) {
-  const gradient = buildGradient(slices);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const segments = useMemo(() => buildSegments(slices, total), [slices, total]);
+  const activeSlice = activeIndex === null ? null : slices[activeIndex];
 
   return (
     <section className="rounded-2xl border border-black/6 bg-white p-5 shadow-sm">
@@ -51,26 +90,71 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-[220px_1fr] md:items-center">
-          <div
-            className="mx-auto grid h-56 w-56 place-items-center rounded-full border border-black/8 bg-stone-50"
-            style={{ backgroundImage: gradient }}
-          >
-            <div className="grid h-28 w-28 place-items-center rounded-full border border-black/8 bg-white text-center shadow-sm">
-              <div>
-                <div className="text-xs uppercase tracking-[0.08em] text-stone-500">Итого</div>
-                <div className="mt-1 text-sm font-semibold text-stone-950">
-                  {formatMoney(total, currency)}
+          <div className="relative mx-auto h-56 w-56">
+            <svg viewBox="0 0 220 220" className="h-56 w-56" role="img" aria-label={title}>
+              <circle cx="110" cy="110" r="88" fill="#f5f3ed" />
+              {segments.map((segment, index) => {
+                const isActive = activeIndex === index;
+
+                return (
+                  <path
+                    key={segment.label}
+                    d={describeDonutSegment(110, 110, isActive ? 92 : 88, 55, segment.startAngle, segment.endAngle)}
+                    fill={segment.color}
+                    stroke="#ffffff"
+                    strokeWidth="2"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${segment.label}: ${formatMoney(segment.value, currency)}`}
+                    className="cursor-pointer transition-opacity outline-none"
+                    style={{ opacity: activeIndex === null || isActive ? 1 : 0.42 }}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onMouseLeave={() => setActiveIndex(null)}
+                    onFocus={() => setActiveIndex(index)}
+                    onBlur={() => setActiveIndex(null)}
+                  />
+                );
+              })}
+            </svg>
+            <div className="pointer-events-none absolute inset-0 grid place-items-center">
+              <div className="grid h-28 w-28 place-items-center rounded-full border border-black/8 bg-white text-center shadow-sm">
+                <div className="px-3">
+                  <div className="text-xs uppercase tracking-[0.08em] text-stone-500">
+                    {activeSlice ? "Сектор" : "Итого"}
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-stone-950">
+                    {activeSlice ? formatMoney(activeSlice.value, currency) : formatMoney(total, currency)}
+                  </div>
                 </div>
               </div>
             </div>
+            {activeSlice ? (
+              <div className="absolute left-1/2 top-2 z-10 w-52 -translate-x-1/2 rounded-2xl border border-black/8 bg-stone-950 px-3 py-2 text-center text-xs leading-5 text-white shadow-xl">
+                <div className="font-semibold">{activeSlice.label}</div>
+                <div>
+                  {formatMoney(activeSlice.value, currency)} · {((activeSlice.value / total) * 100).toFixed(1)}%
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-3">
-            {slices.map((slice) => {
+            {slices.map((slice, index) => {
               const percent = total === 0 ? 0 : (slice.value / total) * 100;
+              const isActive = activeIndex === index;
 
               return (
-                <div key={slice.label} className="rounded-xl border border-black/6 bg-stone-50 p-3">
+                <button
+                  key={slice.label}
+                  type="button"
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                  onFocus={() => setActiveIndex(index)}
+                  onBlur={() => setActiveIndex(null)}
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    isActive ? "border-black/15 bg-white shadow-sm" : "border-black/6 bg-stone-50"
+                  }`}
+                >
                   <div className="mb-2 flex items-center justify-between gap-4 text-sm">
                     <div className="flex items-center gap-3">
                       <span className="h-3 w-3 rounded-full" style={{ backgroundColor: slice.color }} />
@@ -80,12 +164,12 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-stone-200">
                     <div
-                      className="h-full rounded-full"
+                      className="h-full rounded-full transition-all"
                       style={{ width: `${percent}%`, backgroundColor: slice.color }}
                     />
                   </div>
                   <div className="mt-2 text-xs text-stone-500">{percent.toFixed(1)}%</div>
-                </div>
+                </button>
               );
             })}
           </div>
