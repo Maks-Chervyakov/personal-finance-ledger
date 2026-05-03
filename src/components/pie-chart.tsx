@@ -76,7 +76,7 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
   const activeSlice = activeIndex === null ? null : slices[activeIndex];
 
   return (
-    <section className="rounded-2xl border border-black/6 bg-white p-5 shadow-sm">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-black/6 bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-stone-950">{title}</h3>
@@ -89,9 +89,9 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
           Нет расходных данных для диаграммы в этой валюте.
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-[220px_1fr] md:items-center">
-          <div className="relative mx-auto h-56 w-56">
-            <svg viewBox="0 0 220 220" className="h-56 w-56" role="img" aria-label={title}>
+        <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)] md:items-center">
+          <div className="relative mx-auto h-52 w-52 sm:h-56 sm:w-56">
+            <svg viewBox="0 0 220 220" className="h-full w-full" role="img" aria-label={title}>
               <circle cx="110" cy="110" r="88" fill="#f5f3ed" />
               {segments.map((segment, index) => {
                 const isActive = activeIndex === index;
@@ -138,7 +138,7 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
             ) : null}
           </div>
 
-          <div className="space-y-3">
+          <div className="min-w-0 space-y-3">
             {slices.map((slice, index) => {
               const percent = total === 0 ? 0 : (slice.value / total) * 100;
               const isActive = activeIndex === index;
@@ -151,16 +151,16 @@ export function PieChart({ title, currency, total, slices }: PieChartProps) {
                   onMouseLeave={() => setActiveIndex(null)}
                   onFocus={() => setActiveIndex(index)}
                   onBlur={() => setActiveIndex(null)}
-                  className={`w-full rounded-xl border p-3 text-left transition ${
+                  className={`min-w-0 w-full rounded-xl border p-3 text-left transition ${
                     isActive ? "border-black/15 bg-white shadow-sm" : "border-black/6 bg-stone-50"
                   }`}
                 >
-                  <div className="mb-2 flex items-center justify-between gap-4 text-sm">
-                    <div className="flex items-center gap-3">
-                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: slice.color }} />
-                      <span className="font-medium text-stone-900">{slice.label}</span>
+                  <div className="mb-2 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: slice.color }} />
+                      <span className="min-w-0 break-words font-medium text-stone-900">{slice.label}</span>
                     </div>
-                    <span className="text-stone-600">{formatMoney(slice.value, currency)}</span>
+                    <span className="shrink-0 text-stone-600 sm:text-right">{formatMoney(slice.value, currency)}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-stone-200">
                     <div

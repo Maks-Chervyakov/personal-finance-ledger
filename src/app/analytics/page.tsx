@@ -187,7 +187,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
             <p className="text-xs uppercase tracking-[0.08em] text-cyan-200/70">Категории</p>
             <h2 className="mt-2 text-2xl font-semibold text-stone-950">Расходы за месяц</h2>
           </div>
-          <div className="grid gap-4 2xl:grid-cols-2">
+          <div className="grid min-w-0 gap-4">
             {analytics.charts.length > 0 ? (
               analytics.charts.map((chart) => (
                 <PieChart

@@ -284,7 +284,7 @@ export default async function Home({ searchParams }: HomePageProps) {
               Диаграммы по валютам
             </h2>
           </div>
-          <div className="grid gap-4 2xl:grid-cols-2">
+          <div className="grid min-w-0 gap-4">
             {overview.charts.length > 0 ? (
               overview.charts.map((chart) => (
                 <PieChart
