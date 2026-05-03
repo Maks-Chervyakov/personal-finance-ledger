@@ -159,7 +159,7 @@ export default async function Home({ searchParams }: HomePageProps) {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-4 xl:-mx-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.65fr)] 2xl:-mx-16 min-[1800px]:-mx-40">
         <div className="rounded-[32px] border border-white/10 bg-slate-900/72 p-6 shadow-2xl shadow-slate-950/30 sm:p-8">
           <p className="text-[11px] uppercase tracking-[0.32em] text-cyan-200/70">
             Обзор

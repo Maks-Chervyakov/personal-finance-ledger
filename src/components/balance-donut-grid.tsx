@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type KeyboardEvent, useMemo, useState } from "react";
 
 type BalanceSlice = {
   accountId: string;
@@ -76,25 +76,40 @@ function buildSegments(slices: BalanceSlice[], total: number) {
 }
 
 function BalanceDonutCard({ group }: { group: BalanceGroup }) {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const segments = useMemo(
     () => buildSegments(group.slices, group.totalPositiveBalance),
     [group.slices, group.totalPositiveBalance],
   );
+  const activeIndex = hoveredIndex ?? selectedIndex;
   const activeSlice = activeIndex === null ? null : group.slices[activeIndex];
+  const activePercent =
+    activeSlice && group.totalPositiveBalance > 0
+      ? (activeSlice.value / group.totalPositiveBalance) * 100
+      : 0;
+  const toggleSelected = (index: number) => {
+    setSelectedIndex((current) => (current === index ? null : index));
+  };
+  const handleActivationKey = (event: KeyboardEvent<SVGPathElement | HTMLButtonElement>, index: number) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleSelected(index);
+    }
+  };
 
   return (
-    <article className="rounded-2xl border border-black/6 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <article className="min-w-0 rounded-2xl border border-black/6 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <span className="rounded-full border border-black/8 bg-stone-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-stone-900">
           {group.currency}
         </span>
         <span className="text-xs text-stone-500">по счетам</span>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[130px_1fr] sm:items-center xl:grid-cols-1">
-        <div className="relative mx-auto h-32 w-32">
-          <svg viewBox="0 0 140 140" className="h-32 w-32" role="img" aria-label={`Остатки ${group.currency}`}>
+      <div className="grid gap-4">
+        <div className="relative mx-auto h-36 w-36">
+          <svg viewBox="0 0 140 140" className="h-full w-full" role="img" aria-label={`Остатки ${group.currency}`}>
             <circle cx="70" cy="70" r="54" fill="#f5f3ed" />
             {segments.length > 0 ? (
               segments.map((segment, index) => {
@@ -112,10 +127,12 @@ function BalanceDonutCard({ group }: { group: BalanceGroup }) {
                     aria-label={`${segment.label}: ${formatMoney(segment.value, group.currency)}`}
                     className="cursor-pointer outline-none transition-opacity"
                     style={{ opacity: activeIndex === null || isActive ? 1 : 0.38 }}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(null)}
-                    onFocus={() => setActiveIndex(index)}
-                    onBlur={() => setActiveIndex(null)}
+                    onPointerDown={() => toggleSelected(index)}
+                    onKeyDown={(event) => handleActivationKey(event, index)}
+                    onMouseEnter={() => setHoveredIndex(index)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                    onFocus={() => setHoveredIndex(index)}
+                    onBlur={() => setHoveredIndex(null)}
                   />
                 );
               })
@@ -131,36 +148,40 @@ function BalanceDonutCard({ group }: { group: BalanceGroup }) {
               </div>
             </div>
           </div>
-          {activeSlice ? (
-            <div className="absolute left-1/2 top-0 z-10 w-44 -translate-x-1/2 rounded-2xl border border-black/8 bg-stone-950 px-3 py-2 text-center text-xs leading-5 text-white shadow-xl">
-              <div className="font-semibold">{activeSlice.label}</div>
-              <div>
-                {formatMoney(activeSlice.value, group.currency)} · {((activeSlice.value / group.totalPositiveBalance) * 100).toFixed(1)}%
-              </div>
-            </div>
-          ) : null}
         </div>
+
+        {activeSlice ? (
+          <div className="rounded-2xl border border-black/8 bg-stone-950 px-3 py-2 text-xs leading-5 text-white shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0 break-words font-semibold">{activeSlice.label}</span>
+              <span className="shrink-0 text-white/70">{activePercent.toFixed(1)}%</span>
+            </div>
+            <div className="mt-1 text-white/80">{formatMoney(activeSlice.value, group.currency)}</div>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           {group.slices.slice(0, 3).map((slice, index) => (
             <button
               key={slice.accountId}
               type="button"
-              onMouseEnter={() => setActiveIndex(index)}
-              onMouseLeave={() => setActiveIndex(null)}
-              onFocus={() => setActiveIndex(index)}
-              onBlur={() => setActiveIndex(null)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1.5 text-left text-xs transition hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20"
+              onPointerDown={() => toggleSelected(index)}
+              onKeyDown={(event) => handleActivationKey(event, index)}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              onFocus={() => setHoveredIndex(index)}
+              onBlur={() => setHoveredIndex(null)}
+              className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-black/6 bg-stone-50 px-3 py-2 text-left text-xs transition hover:border-black/10 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20"
             >
               <span className="flex min-w-0 items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: slice.color }} />
-                <span className="truncate font-medium text-stone-900">{slice.label}</span>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: slice.color }} />
+                <span className="min-w-0 break-words font-medium text-stone-900">{slice.label}</span>
               </span>
               <span className="shrink-0 text-stone-600">{formatMoney(slice.value, group.currency)}</span>
             </button>
           ))}
           {group.nonPositiveAccounts.length > 0 ? (
-            <div className="rounded-xl border border-dashed border-black/8 bg-stone-50 px-2 py-1.5 text-xs text-stone-500">
+            <div className="rounded-2xl border border-dashed border-black/8 bg-stone-50 px-3 py-2 text-xs leading-5 text-stone-500">
               Без положительного остатка: {group.nonPositiveAccounts.length}
             </div>
           ) : null}
@@ -172,7 +193,7 @@ function BalanceDonutCard({ group }: { group: BalanceGroup }) {
 
 export function BalanceDonutGrid({ groups }: BalanceDonutGridProps) {
   return (
-    <div className="mt-8 grid gap-3 lg:grid-cols-3">
+    <div className="mt-8 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
       {groups.map((group) => (
         <BalanceDonutCard key={group.currency} group={group} />
       ))}
