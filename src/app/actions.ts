@@ -3,7 +3,13 @@
 import { refresh, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { AccountKind, LegDirection, Prisma, TransactionType, type Currency } from "@prisma/client";
+import { ZodError } from "zod";
 
+import {
+  formActionError,
+  formActionSuccess,
+  type FormActionState,
+} from "@/lib/form-state";
 import { prisma } from "@/lib/prisma";
 import { parseOccurredOn, toOptionalText } from "@/lib/utils";
 import {
@@ -37,12 +43,16 @@ function revalidateApp() {
   refresh();
 }
 
-function normalizeError(error: unknown): Error {
-  if (error instanceof Error) {
-    return error;
+function getActionErrorMessage(error: unknown): string {
+  if (error instanceof ZodError) {
+    return error.issues[0]?.message ?? "Проверьте поля формы";
   }
 
-  return new Error("Непредвиденная ошибка");
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Непредвиденная ошибка";
 }
 
 function ensure(condition: unknown, message: string): asserts condition {
@@ -64,7 +74,7 @@ function createLeg(accountId: string, direction: LegDirection, amountDecimal: st
   };
 }
 
-export async function createExpense(formData: FormData) {
+export async function createExpense(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -94,15 +104,17 @@ export async function createExpense(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function updateExpense(formData: FormData) {
+export async function updateExpense(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -145,15 +157,17 @@ export async function updateExpense(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function createIncome(formData: FormData) {
+export async function createIncome(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -176,15 +190,17 @@ export async function createIncome(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function updateIncome(formData: FormData) {
+export async function updateIncome(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -211,15 +227,17 @@ export async function updateIncome(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function createTransfer(formData: FormData) {
+export async function createTransfer(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -251,15 +269,17 @@ export async function createTransfer(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function updateTransfer(formData: FormData) {
+export async function updateTransfer(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -296,15 +316,17 @@ export async function updateTransfer(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function createExchange(formData: FormData) {
+export async function createExchange(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -336,15 +358,17 @@ export async function createExchange(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function updateExchange(formData: FormData) {
+export async function updateExchange(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   const redirectTo = toOptionalText(formData.get("redirectTo"));
 
   try {
@@ -381,15 +405,17 @@ export async function updateExchange(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
 
   if (redirectTo) {
     redirect(redirectTo);
   }
+
+  return formActionSuccess();
 }
 
-export async function deleteTransaction(formData: FormData) {
+export async function deleteTransaction(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = deleteTransactionSchema.parse(toDataObject(formData));
     await prisma.transaction.delete({
@@ -397,11 +423,13 @@ export async function deleteTransaction(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function createCategory(formData: FormData) {
+export async function createCategory(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = createCategorySchema.parse(toDataObject(formData));
     const existing = await prisma.category.findUnique({ where: { name: data.name } });
@@ -422,11 +450,13 @@ export async function createCategory(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function updateCategory(formData: FormData) {
+export async function updateCategory(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = updateCategorySchema.parse(toDataObject(formData));
     await prisma.category.update({
@@ -437,11 +467,13 @@ export async function updateCategory(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function deleteCategory(formData: FormData) {
+export async function deleteCategory(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = categoryMutationSchema.parse(toDataObject(formData));
     await prisma.category.update({
@@ -453,11 +485,13 @@ export async function deleteCategory(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function restoreCategory(formData: FormData) {
+export async function restoreCategory(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = categoryMutationSchema.parse(toDataObject(formData));
     await prisma.category.update({
@@ -469,26 +503,32 @@ export async function restoreCategory(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function hardDeleteCategory(formData: FormData) {
+export async function hardDeleteCategory(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = categoryMutationSchema.parse(toDataObject(formData));
     await prisma.$transaction(async (tx) => {
       const category = await tx.category.findUnique({
         where: { id: data.categoryId },
-        select: { id: true },
-      });
-
-      ensure(category, "РљР°С‚РµРіРѕСЂРёСЏ РЅРµ РЅР°Р№РґРµРЅР°");
-
-      await tx.transaction.deleteMany({
-        where: {
-          categoryId: category.id,
+        select: {
+          id: true,
+          _count: {
+            select: { transactions: true },
+          },
         },
       });
+
+      ensure(category, "Категория не найдена");
+      ensure(
+        category._count.transactions === 0,
+        "Нельзя полностью удалить категорию с историей операций. Сначала оставьте ее в удаленных или перенесите операции.",
+      );
+
       await tx.category.delete({
         where: {
           id: category.id,
@@ -497,11 +537,13 @@ export async function hardDeleteCategory(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function createAccount(formData: FormData) {
+export async function createAccount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = createAccountSchema.parse(toDataObject(formData));
     const existing = await prisma.account.findUnique({ where: { name: data.name } });
@@ -527,11 +569,13 @@ export async function createAccount(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function updateAccount(formData: FormData) {
+export async function updateAccount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = updateAccountSchema.parse(toDataObject(formData));
     const existing = await prisma.account.findUnique({
@@ -561,11 +605,13 @@ export async function updateAccount(formData: FormData) {
 
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function archiveAccount(formData: FormData) {
+export async function archiveAccount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = accountMutationSchema.parse(toDataObject(formData));
     await prisma.account.update({
@@ -576,11 +622,13 @@ export async function archiveAccount(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }
 
-export async function restoreAccount(formData: FormData) {
+export async function restoreAccount(_prevState: FormActionState, formData: FormData): Promise<FormActionState> {
   try {
     const data = accountMutationSchema.parse(toDataObject(formData));
     await prisma.account.update({
@@ -591,6 +639,8 @@ export async function restoreAccount(formData: FormData) {
     });
     revalidateApp();
   } catch (error) {
-    throw normalizeError(error);
+    return formActionError(getActionErrorMessage(error));
   }
+
+  return formActionSuccess();
 }

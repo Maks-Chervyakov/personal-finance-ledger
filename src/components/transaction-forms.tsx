@@ -1,12 +1,12 @@
 ﻿import type { Account, Category } from "@prisma/client";
 
+import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
+import type { FormAction } from "@/lib/form-state";
 import { toDateInputValue } from "@/lib/utils";
 
-type ServerAction = (formData: FormData) => Promise<void>;
-
 type CommonFormProps = {
-  action: ServerAction;
+  action: FormAction;
   submitLabel: string;
   pendingLabel: string;
   title?: string;
@@ -125,7 +125,7 @@ export function ExpenseForm({ accounts, categories, action, submitLabel, pending
 
   return (
     <FormCard title={title} compact={compact}>
-      <form action={action} className="space-y-4">
+      <ActionForm action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
         {hiddenFields?.map((field) => (
           <input key={field.name} type="hidden" name={field.name} value={field.value} />
@@ -167,10 +167,10 @@ export function ExpenseForm({ accounts, categories, action, submitLabel, pending
         </FormGrid>
 
         <div className="flex items-center justify-between gap-4">
-          <p className="text-xs text-slate-500">Категория сохраняется snapshot-именем внутри операции.</p>
+          <p className="text-xs text-slate-500">Категория сохраняется названием на момент операции.</p>
           <SubmitButton label={submitLabel} pendingLabel={pendingLabel} disabled={disabled} />
         </div>
-      </form>
+      </ActionForm>
     </FormCard>
   );
 }
@@ -181,7 +181,7 @@ export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title,
 
   return (
     <FormCard title={title} compact={compact}>
-      <form action={action} className="space-y-4">
+      <ActionForm action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
         {hiddenFields?.map((field) => (
           <input key={field.name} type="hidden" name={field.name} value={field.value} />
@@ -214,7 +214,7 @@ export function IncomeForm({ accounts, action, submitLabel, pendingLabel, title,
           <p className="text-xs text-slate-500">Доход по умолчанию можно направлять на Binance USDT.</p>
           <SubmitButton label={submitLabel} pendingLabel={pendingLabel} disabled={accountOptions.length === 0} />
         </div>
-      </form>
+      </ActionForm>
     </FormCard>
   );
 }
@@ -224,7 +224,7 @@ export function TransferForm({ accounts, action, submitLabel, pendingLabel, titl
 
   return (
     <FormCard title={title} compact={compact}>
-      <form action={action} className="space-y-4">
+      <ActionForm action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
         {hiddenFields?.map((field) => (
           <input key={field.name} type="hidden" name={field.name} value={field.value} />
@@ -269,17 +269,19 @@ export function TransferForm({ accounts, action, submitLabel, pendingLabel, titl
           <p className="text-xs text-slate-500">Перевод разрешен только между счетами одной валюты.</p>
           <SubmitButton label={submitLabel} pendingLabel={pendingLabel} disabled={accountOptions.length < 2} />
         </div>
-      </form>
+      </ActionForm>
     </FormCard>
   );
 }
 
 export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, title, compact, initial, hiddenFields }: ExchangeFormProps) {
   const accountOptions = getAccountOptions(accounts, [initial?.fromAccountId ?? "", initial?.toAccountId ?? ""].filter(Boolean));
+  const defaultFromAccountId = initial?.fromAccountId ?? "";
+  const defaultToAccountId = initial?.toAccountId ?? "";
 
   return (
     <FormCard title={title} compact={compact}>
-      <form action={action} className="space-y-4">
+      <ActionForm action={action} className="space-y-4">
         {initial?.transactionId ? <input type="hidden" name="transactionId" value={initial.transactionId} /> : null}
         {hiddenFields?.map((field) => (
           <input key={field.name} type="hidden" name={field.name} value={field.value} />
@@ -289,7 +291,7 @@ export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, titl
             <input type="date" name="occurredOn" defaultValue={initial?.occurredOn ?? getTodayDate()} className={inputClassName} required />
           </Field>
           <Field label="Откуда списать">
-            <select name="fromAccountId" defaultValue={initial?.fromAccountId ?? accountOptions[0]?.id ?? ""} className={inputClassName} required>
+            <select name="fromAccountId" defaultValue={defaultFromAccountId} className={inputClassName} required>
               <option value="" disabled>
                 Выбери счет
               </option>
@@ -301,7 +303,7 @@ export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, titl
             </select>
           </Field>
           <Field label="Куда зачислить">
-            <select name="toAccountId" defaultValue={initial?.toAccountId ?? accountOptions[1]?.id ?? accountOptions[0]?.id ?? ""} className={inputClassName} required>
+            <select name="toAccountId" defaultValue={defaultToAccountId} className={inputClassName} required>
               <option value="" disabled>
                 Выбери счет
               </option>
@@ -327,7 +329,7 @@ export function ExchangeForm({ accounts, action, submitLabel, pendingLabel, titl
           <p className="text-xs text-slate-500">Обмен не считается расходом и сохраняет обе стороны операции.</p>
           <SubmitButton label={submitLabel} pendingLabel={pendingLabel} disabled={accountOptions.length < 2} />
         </div>
-      </form>
+      </ActionForm>
     </FormCard>
   );
 }

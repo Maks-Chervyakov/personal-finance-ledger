@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LegDirection, TransactionType } from "@prisma/client";
 
 import { deleteTransaction } from "@/app/actions";
+import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/constants";
 import type { TransactionWithDetails } from "@/lib/data";
@@ -117,6 +118,7 @@ export function TransactionList({
         const isPreview = variant === "preview";
         const editHref = buildEditHref?.(transaction.id);
         const isActive = transaction.id === activeTransactionId;
+        const summary = getSummary(transaction);
 
         return (
           <article
@@ -152,7 +154,7 @@ export function TransactionList({
                     isPreview ? "text-base font-medium" : "text-lg font-semibold"
                   }`}
                 >
-                  {getSummary(transaction)}
+                  {summary}
                 </h3>
 
                 {transaction.note ? (
@@ -176,7 +178,7 @@ export function TransactionList({
                       Редактировать
                     </Link>
                   ) : null}
-                  <form action={deleteTransaction}>
+                  <ActionForm action={deleteTransaction}>
                     <input
                       type="hidden"
                       name="transactionId"
@@ -185,9 +187,11 @@ export function TransactionList({
                     <SubmitButton
                       label="Удалить"
                       pendingLabel="Удаляю..."
+                      ariaLabel={`Удалить операцию ${summary}`}
+                      confirmMessage={`Удалить операцию "${summary}"? Это действие нельзя отменить.`}
                       className="rounded-full border border-rose-500/35 px-4 py-2 text-sm font-medium text-rose-200 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
-                  </form>
+                  </ActionForm>
                 </div>
               ) : null}
             </div>

@@ -21,6 +21,7 @@ import {
 } from "@/components/transaction-forms";
 import { TRANSACTION_TYPE_LABELS } from "@/lib/constants";
 import type { TransactionWithDetails } from "@/lib/data";
+import type { FormActionState } from "@/lib/form-state";
 import { decimalToString, formatDate } from "@/lib/utils";
 
 type TransactionEditorSheetProps = {
@@ -45,31 +46,47 @@ export function TransactionEditorSheet({
 }: TransactionEditorSheetProps) {
   const { out, incoming } = getLegs(transaction);
 
-  async function updateExpenseAndClose(formData: FormData) {
+  async function updateExpenseAndClose(prevState: FormActionState, formData: FormData): Promise<FormActionState> {
     "use server";
 
-    await updateExpense(formData);
+    const result = await updateExpense(prevState, formData);
+    if (result.status === "error") {
+      return result;
+    }
+
     redirect(closeHref);
   }
 
-  async function updateIncomeAndClose(formData: FormData) {
+  async function updateIncomeAndClose(prevState: FormActionState, formData: FormData): Promise<FormActionState> {
     "use server";
 
-    await updateIncome(formData);
+    const result = await updateIncome(prevState, formData);
+    if (result.status === "error") {
+      return result;
+    }
+
     redirect(closeHref);
   }
 
-  async function updateTransferAndClose(formData: FormData) {
+  async function updateTransferAndClose(prevState: FormActionState, formData: FormData): Promise<FormActionState> {
     "use server";
 
-    await updateTransfer(formData);
+    const result = await updateTransfer(prevState, formData);
+    if (result.status === "error") {
+      return result;
+    }
+
     redirect(closeHref);
   }
 
-  async function updateExchangeAndClose(formData: FormData) {
+  async function updateExchangeAndClose(prevState: FormActionState, formData: FormData): Promise<FormActionState> {
     "use server";
 
-    await updateExchange(formData);
+    const result = await updateExchange(prevState, formData);
+    if (result.status === "error") {
+      return result;
+    }
+
     redirect(closeHref);
   }
 

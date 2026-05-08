@@ -6,6 +6,7 @@ import {
   restoreAccount,
   updateAccount,
 } from "@/app/actions";
+import { ActionForm } from "@/components/action-form";
 import { SubmitButton } from "@/components/submit-button";
 import { ACCOUNT_KIND_LABELS, CURRENCY_LABELS } from "@/lib/constants";
 import { getAccountsOverview } from "@/lib/data";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
 
 const inputClassName =
   "w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2.5 text-sm text-white outline-none transition focus:border-cyan-300";
+const gridErrorClassName =
+  "rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm leading-6 text-rose-100 md:col-span-2";
 
 export default async function ManageAccountsPage() {
   const accounts = await getAccountsOverview();
@@ -64,7 +67,7 @@ export default async function ManageAccountsPage() {
             </p>
           </div>
 
-          <form action={createAccount} className="grid gap-4 md:grid-cols-2">
+          <ActionForm action={createAccount} className="grid gap-4 md:grid-cols-2" errorClassName={gridErrorClassName}>
             <label className="space-y-2 text-sm text-slate-300 md:col-span-2">
               <span className="block text-xs uppercase tracking-[0.2em] text-slate-500">
                 Название
@@ -116,7 +119,7 @@ export default async function ManageAccountsPage() {
             <div className="md:col-span-2">
               <SubmitButton label="Добавить счет" pendingLabel="Добавляю..." />
             </div>
-          </form>
+          </ActionForm>
         </section>
       </section>
 
@@ -161,21 +164,23 @@ export default async function ManageAccountsPage() {
                   </div>
                 </div>
 
-                <form action={archiveAccount}>
+                <ActionForm action={archiveAccount}>
                   <input type="hidden" name="accountId" value={account.id} />
                   <SubmitButton
                     label="Архивировать"
                     pendingLabel="Архивирую..."
+                    ariaLabel={`Архивировать счет ${account.name}`}
+                    confirmMessage={`Архивировать счет "${account.name}"? Новые операции больше нельзя будет создавать на этот счет.`}
                     className="rounded-full border border-amber-500/35 px-4 py-2 text-sm font-medium text-amber-200 transition hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                   />
-                </form>
+                </ActionForm>
               </div>
 
               <details className="mt-5 rounded-[26px] border border-white/8 bg-slate-950/45 p-4">
                 <summary className="cursor-pointer text-sm font-medium text-slate-200">
                   Редактировать счет
                 </summary>
-                <form action={updateAccount} className="mt-4 grid gap-4 md:grid-cols-2">
+                <ActionForm action={updateAccount} className="mt-4 grid gap-4 md:grid-cols-2" errorClassName={gridErrorClassName}>
                   <input type="hidden" name="accountId" value={account.id} />
 
                   <label className="space-y-2 text-sm text-slate-300 md:col-span-2">
@@ -238,7 +243,7 @@ export default async function ManageAccountsPage() {
                   <div className="md:col-span-2">
                     <SubmitButton label="Сохранить счет" pendingLabel="Сохраняю..." />
                   </div>
-                </form>
+                </ActionForm>
               </details>
             </article>
           ))}
@@ -273,14 +278,16 @@ export default async function ManageAccountsPage() {
                     </p>
                   </div>
 
-                  <form action={restoreAccount}>
+                  <ActionForm action={restoreAccount}>
                     <input type="hidden" name="accountId" value={account.id} />
                     <SubmitButton
                       label="Вернуть из архива"
                       pendingLabel="Возвращаю..."
+                      ariaLabel={`Вернуть из архива счет ${account.name}`}
+                      confirmMessage={`Вернуть счет "${account.name}" из архива?`}
                       className="rounded-full border border-emerald-500/35 px-4 py-2 text-sm font-medium text-emerald-200 transition hover:bg-emerald-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                     />
-                  </form>
+                  </ActionForm>
                 </div>
               </article>
             ))}
